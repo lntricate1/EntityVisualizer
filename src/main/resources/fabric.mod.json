@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+
+  "name": "${name}",
+  "description": "",
+  "authors": [
+    "lntricate"
+  ],
+  "contact": {
+    "sources": "https://github.com/"
+  },
+
+  "icon": "assets/template_mod/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "me.lntricate.template_mod.TemplateMod"
+    ],
+    "preLaunch": [
+      "me.lntricate.template_mod.PreLaunch"
+    ]
+  },
+  "mixins": [
+    "template_mod.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.11.4",
+    "minecraft": "${minecraft_dependency}"
+  }
+}

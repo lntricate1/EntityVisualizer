@@ -9,22 +9,25 @@
     "lntricate"
   ],
   "contact": {
-    "sources": "https://github.com/"
+    "sources": "https://github.com/lntricate1/EntityVisualizer"
   },
 
-  "icon": "assets/template_mod/icon.png",
+  "icon": "assets/entityvisualizer/icon.png",
 
   "environment": "*",
   "entrypoints": {
     "main": [
-      "me.lntricate.template_mod.TemplateMod"
+      "me.lntricate.entityvisualizer.EntityVisualizerMod"
     ],
     "preLaunch": [
-      "me.lntricate.template_mod.PreLaunch"
+      "me.lntricate.entityvisualizer.PreLaunch"
+    ],
+    "modmenu": [
+      "me.lntricate.entityvisualizer.ModMenuImpl"
     ]
   },
   "mixins": [
-    "template_mod.mixins.json"
+    "entityvisualizer.mixins.json"
   ],
 
   "depends": {

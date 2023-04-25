@@ -5,19 +5,19 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.math.Matrix4f;
 
 import fi.dy.masa.malilib.interfaces.IClientTickHandler;
 import fi.dy.masa.malilib.interfaces.IRenderer;
 import fi.dy.masa.malilib.util.Color4f;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.render.VertexFormat.DrawMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.world.phys.Vec3;
 
 public class RenderHandler implements IRenderer, IClientTickHandler
 {
@@ -30,11 +30,11 @@ public class RenderHandler implements IRenderer, IClientTickHandler
   }
 
   @Override
-  public void onRenderWorldLast(MatrixStack matrixStack, Matrix4f projMatrix)
+  public void onRenderWorldLast(PoseStack poseStack, Matrix4f projMatrix)
   {
-    MinecraftClient minecraftClient = MinecraftClient.getInstance();
-    Vec3d cpos = minecraftClient.gameRenderer.getCamera().getPos();
-    double cx = cpos.getX(); double cy = cpos.getY(); double cz = cpos.getZ();
+    Minecraft minecraft = Minecraft.getInstance();
+    Vec3 cpos = minecraft.gameRenderer.getMainCamera().getPosition();
+    double cx = cpos.x(); double cy = cpos.y(); double cz = cpos.z();
 
     RenderSystem.setShader(GameRenderer::getPositionColorShader);
     RenderSystem.disableDepthTest();
@@ -48,7 +48,7 @@ public class RenderHandler implements IRenderer, IClientTickHandler
   }
 
   @Override
-  public void onClientTick(MinecraftClient minecraftClient)
+  public void onClientTick(Minecraft minecraft)
   {
     long time = System.currentTimeMillis();
     Iterator<Shape> iter = shapes.iterator();
@@ -144,12 +144,12 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     @Override
     public void render(double cx, double cy, double cz)
     {
-      Tessellator tessellator = Tessellator.getInstance();
-      BufferBuilder buffer = tessellator.getBuffer();
-      buffer.begin(DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
-      buffer.vertex(x-cx, y-cy, z-cz).color(color.r, color.g, color.b, color.a).next();
-      buffer.vertex(X-cx, Y-cy, Z-cz).color(color.r, color.g, color.b, color.a).next();
-      tessellator.draw();
+      Tesselator tessellator = Tesselator.getInstance();
+      BufferBuilder buffer = tessellator.getBuilder();
+      buffer.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+      buffer.vertex(x-cx, y-cy, z-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(X-cx, Y-cy, Z-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      tessellator.end();
     }
   }
 
@@ -170,14 +170,14 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     @Override
     public void render(double cx, double cy, double cz)
     {
-      Tessellator tessellator = Tessellator.getInstance();
-      BufferBuilder buffer = tessellator.getBuffer();
-      buffer.begin(DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-      buffer.vertex(x1-cx, y1-cy, z1-cz).color(color.r, color.g, color.b, color.a).next();
-      buffer.vertex(x2-cx, y2-cy, z2-cz).color(color.r, color.g, color.b, color.a).next();
-      buffer.vertex(x3-cx, y3-cy, z3-cz).color(color.r, color.g, color.b, color.a).next();
-      buffer.vertex(x4-cx, y4-cy, z4-cz).color(color.r, color.g, color.b, color.a).next();
-      tessellator.draw();
+      Tesselator tessellator = Tesselator.getInstance();
+      BufferBuilder buffer = tessellator.getBuilder();
+      buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+      buffer.vertex(x1-cx, y1-cy, z1-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x2-cx, y2-cy, z2-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x3-cx, y3-cy, z3-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x4-cx, y4-cy, z4-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      tessellator.end();
     }
   }
 
@@ -190,7 +190,7 @@ public class RenderHandler implements IRenderer, IClientTickHandler
       shapes = new Shape[]
       {
         new Quad(x, y, z, x, Y, z, x, Y, Z, x, y, Z, fill),
-        new Quad(X, y, z, X, y, Z, X, Y, Z, X, Y, Z, fill),
+        new Quad(X, y, z, X, y, Z, X, Y, Z, X, Y, z, fill),
 
         new Quad(x, y, z, x, y, Z, X, y, Z, X, y, z, fill),
         new Quad(x, Y, z, X, Y, z, X, Y, Z, x, Y, Z, fill),

@@ -8,14 +8,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import fi.dy.masa.malilib.util.Color4f;
 import me.lntricate.entityvisualizer.config.Configs;
 import me.lntricate.entityvisualizer.event.RenderHandler;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 
-@Mixin(ClientPlayNetworkHandler.class)
-public class ClientPlayNetworkHandlerMixin
+@Mixin(ClientPacketListener.class)
+public class ClientPacketListenerMixin
 {
-  @Inject(method = "onExplosion", at = @At("TAIL"))
-  private void onExplosion(ExplosionS2CPacket packet, CallbackInfo ci)
+  @Inject(method = "handleExplosion", at = @At("TAIL"))
+  private void onExplosion(ClientboundExplodePacket packet, CallbackInfo ci)
   {
     double x = packet.getX();
     double y = packet.getY();
@@ -28,7 +28,6 @@ public class ClientPlayNetworkHandlerMixin
     if(Configs.Renderers.EXPLOSIONS.config.getBooleanValue())
     {
       RenderHandler.addCuboid(x, y, z, explosionBoxSize, explosionBoxStroke, explosionBoxFill, Configs.Renderers.EXPLOSIONS.config.getIntegerValue());
-      System.out.println("ADDING CUBOID: " + Configs.Renderers.EXPLOSIONS.config.getIntegerValue());
     }
   }
 }

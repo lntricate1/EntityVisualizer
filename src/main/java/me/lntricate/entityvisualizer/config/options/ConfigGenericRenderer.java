@@ -3,7 +3,7 @@ package me.lntricate.entityvisualizer.config.options;
 import fi.dy.masa.malilib.config.IConfigInteger;
 import fi.dy.masa.malilib.config.options.ConfigBooleanHotkeyed;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 
 public class ConfigGenericRenderer extends ConfigBooleanHotkeyed implements IConfigInteger
 {
@@ -75,7 +75,7 @@ public class ConfigGenericRenderer extends ConfigBooleanHotkeyed implements ICon
 
   protected int getClampedValue(int value)
   {
-    return MathHelper.clamp(value, this.minValue, this.maxValue);
+    return Mth.clamp(value, this.minValue, this.maxValue);
   }
 
   @Override

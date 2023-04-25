@@ -6,7 +6,7 @@ import fi.dy.masa.malilib.hotkeys.IKeybind;
 import fi.dy.masa.malilib.hotkeys.KeyAction;
 import me.lntricate.entityvisualizer.config.Configs;
 import me.lntricate.entityvisualizer.config.gui.GuiConfigs;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public class KeyCallbacks
 {
@@ -21,7 +21,7 @@ public class KeyCallbacks
     @Override
     public boolean onKeyAction(KeyAction action, IKeybind key)
     {
-      MinecraftClient mc = MinecraftClient.getInstance();
+      Minecraft mc = Minecraft.getInstance();
       if(mc.player == null)
         return false;
 

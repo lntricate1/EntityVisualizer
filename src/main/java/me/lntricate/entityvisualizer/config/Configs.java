@@ -1,27 +1,27 @@
 package me.lntricate.entityvisualizer.config;
 
-import java.util.ArrayList;
-import java.util.List;
+// import java.util.ArrayList;
+// import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
+// import com.google.gson.JsonElement;
+// import com.google.gson.JsonPrimitive;
 
-import fi.dy.masa.malilib.config.ConfigType;
+// import fi.dy.masa.malilib.config.ConfigType;
 import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.config.IConfigHandler;
-import fi.dy.masa.malilib.config.IConfigInteger;
-import fi.dy.masa.malilib.config.IHotkeyTogglable;
+// import fi.dy.masa.malilib.config.IConfigInteger;
+// import fi.dy.masa.malilib.config.IHotkeyTogglable;
 import fi.dy.masa.malilib.config.options.ConfigBooleanHotkeyed;
 import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
-import fi.dy.masa.malilib.hotkeys.IKeybind;
-import fi.dy.masa.malilib.hotkeys.KeybindMulti;
-import fi.dy.masa.malilib.hotkeys.KeybindSettings;
-import fi.dy.masa.malilib.util.StringUtils;
-import fi.dy.masa.malilib.hotkeys.KeyCallbackToggleBoolean;
-import me.lntricate.entityvisualizer.EntityVisualizerMod;
-import me.lntricate.entityvisualizer.config.options.BooleanHotkeyGuiWrapper;
+// import fi.dy.masa.malilib.hotkeys.IKeybind;
+// import fi.dy.masa.malilib.hotkeys.KeybindMulti;
+// import fi.dy.masa.malilib.hotkeys.KeybindSettings;
+// import fi.dy.masa.malilib.util.StringUtils;
+// import fi.dy.masa.malilib.hotkeys.KeyCallbackToggleBoolean;
+// import me.lntricate.entityvisualizer.EntityVisualizerMod;
+// import me.lntricate.entityvisualizer.config.options.BooleanHotkeyGuiWrapper;
 import me.lntricate.entityvisualizer.config.options.ConfigGenericRenderer;
 
 public class Configs implements IConfigHandler

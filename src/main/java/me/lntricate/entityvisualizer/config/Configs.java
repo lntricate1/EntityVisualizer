@@ -1,33 +1,18 @@
 package me.lntricate.entityvisualizer.config;
 
-import java.util.List;
-
-// import java.util.ArrayList;
-// import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-// import com.google.gson.JsonElement;
-// import com.google.gson.JsonPrimitive;
-
-// import fi.dy.masa.malilib.config.ConfigType;
 import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.config.IConfigHandler;
-// import fi.dy.masa.malilib.config.IConfigInteger;
-// import fi.dy.masa.malilib.config.IHotkeyTogglable;
+import fi.dy.masa.malilib.config.options.ConfigBoolean;
 import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import fi.dy.masa.malilib.config.options.ConfigInteger;
 import fi.dy.masa.malilib.config.options.ConfigOptionList;
 import fi.dy.masa.malilib.config.options.ConfigStringList;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
 import fi.dy.masa.malilib.util.restrictions.UsageRestriction.ListType;
-// import fi.dy.masa.malilib.hotkeys.IKeybind;
-// import fi.dy.masa.malilib.hotkeys.KeybindMulti;
-// import fi.dy.masa.malilib.hotkeys.KeybindSettings;
-// import fi.dy.masa.malilib.util.StringUtils;
-// import fi.dy.masa.malilib.hotkeys.KeyCallbackToggleBoolean;
-// import me.lntricate.entityvisualizer.EntityVisualizerMod;
-// import me.lntricate.entityvisualizer.config.options.BooleanHotkeyGuiWrapper;
 import me.lntricate.entityvisualizer.config.options.ConfigGenericRenderer;
+import me.lntricate.entityvisualizer.event.RenderHandler;
+import me.lntricate.entityvisualizer.network.ClientNetworkHandler;
 import net.minecraft.core.Registry;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Block;
@@ -77,11 +62,24 @@ public class Configs implements IConfigHandler
     EXPLOSION_MAX_BLOCKS     ("explosionMaxBlocks",      "Shows the blocks POSSIBLE to be destroyed by an explosion", "Explosion Maximum Blocks"),
     EXPLOSION_AFFECTED_BLOCKS("explosionAffectedBlocks", "Shows the blocks ACTUALLY destroyed by an explosion",       "Explosion Affected Blocks"),
 
-    ENTITY_CREATION  ("entityCreation",   "Shows boxes at entity spawn packets",  "Entity Creation"),
-    ENTITY_TICKS     ("entityTicks",      "Shows boxes at entity tick locations", "Entity Ticks"),
-    ENTITY_TRAJECTORY("entityTrajectory", "Shows lines for entity movement",      "Entity Trajectory");
+    ENTITY_CREATION  ("entityCreation",   "Shows boxes at entity spawn locations", "Entity Creation"),
+    ENTITY_TICKS     ("entityTicks",      "Shows boxes at entity tick locations",  "Entity Ticks"),
+    ENTITY_TRAJECTORY("entityTrajectory", "Shows lines for entity movement",       "Entity Trajectory"),
+    ENTITY_DEATHS    ("entityDeaths",     "Shows boxes at entity death locations", "Entity Death");
+
+    private static ImmutableList<ConfigBoolean> entityPacketRequirers = ImmutableList.of(
+      ENTITY_TICKS.config,
+      ENTITY_TRAJECTORY.config,
+      ENTITY_DEATHS.config
+    );
 
     public final ConfigGenericRenderer config;
+
+    static
+    {
+      for(ConfigBoolean config : entityPacketRequirers)
+        config.setValueChangeCallback(Renderers::onEntityRendererChanged);
+    }
 
     private Renderers(String name, String comment, String prettyName)
     {
@@ -97,6 +95,18 @@ public class Configs implements IConfigHandler
     {
       return ImmutableList.copyOf(ImmutableList.copyOf(values()).stream().map((renderer) -> renderer.config).toList());
     }
+
+    public static boolean requireEntityPackets()
+    {
+      for(ConfigBoolean config : entityPacketRequirers)
+        if(config.getBooleanValue()) return true;
+      return false;
+    }
+
+    private static void onEntityRendererChanged(ConfigBoolean configBoolean)
+    {
+      ClientNetworkHandler.setPacketRecievingState(Renderers.requireEntityPackets());
+    }
   }
 
   public enum Lists
@@ -108,7 +118,8 @@ public class Configs implements IConfigHandler
 
     ENTITY_CREATION("entityCreation", ListContext.ENTITIES),
     ENTITY_TICKS("entityTicks", ListContext.ENTITIES),
-    ENTITY_TRAJECTORY("entityTrajectory", ListContext.ENTITIES);
+    ENTITY_TRAJECTORY("entityTrajectory", ListContext.ENTITIES),
+    ENTITY_DEATHS("entityDeaths", ListContext.ENTITIES);
 
     private ConfigOptionList configListType;
     private ConfigStringList configWhitelist, configBlacklist;

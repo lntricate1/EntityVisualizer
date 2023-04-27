@@ -1,9 +1,9 @@
 package me.lntricate.entityvisualizer.mixins;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,13 +13,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import fi.dy.masa.malilib.util.Color4f;
 import me.lntricate.entityvisualizer.config.Configs;
 import me.lntricate.entityvisualizer.event.RenderHandler;
+import me.lntricate.entityvisualizer.helpers.EntityPositionHelper;
 import me.lntricate.entityvisualizer.helpers.ExplosionHelper;
+import me.lntricate.entityvisualizer.network.ClientNetworkHandler;
+import me.lntricate.entityvisualizer.network.NetworkStuff;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -28,10 +33,20 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(ClientPacketListener.class)
 public class ClientPacketListenerMixin
 {
-  @Shadow private Minecraft minecraft;
+  @Shadow @Final private Minecraft minecraft;
   @Shadow private ClientLevel level;
 
   private final String mainThreadInjectionPoint = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/util/thread/BlockableEventLoop;)V";
+
+  @Inject(method = "handleCustomPayload", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ClientboundCustomPayloadPacket;getIdentifier()Lnet/minecraft/resources/ResourceLocation;"), cancellable = true)
+  private void onCustomPayload(ClientboundCustomPayloadPacket packet, CallbackInfo ci)
+  {
+    if(packet.getIdentifier().equals(NetworkStuff.CHANNEL))
+    {
+      ClientNetworkHandler.handleData(packet.getData(), minecraft.player);
+      ci.cancel();
+    }
+  }
 
   @Inject(method = "handleExplosion", at = @At(value = "INVOKE", target = mainThreadInjectionPoint, shift = At.Shift.AFTER))
   private void onExplosion(ClientboundExplodePacket packet, CallbackInfo ci)
@@ -84,14 +99,13 @@ public class ClientPacketListenerMixin
   @Inject(method = "handleAddEntity", at = @At("TAIL"))
   private void onEntitySpawn(ClientboundAddEntityPacket packet, CallbackInfo ci)
   {
-    if(Configs.Renderers.ENTITY_CREATION.config.getBooleanValue())
-    {
-      Entity entity = level.getEntity(packet.getId());
-      // MAKE CUSTOMIZABLE
-      Color4f stroke = new Color4f(0F, 0F, 0F, 1F);
-      Color4f fill = new Color4f(0F, 1F, 0F, 0.26F);
-      if(Configs.Lists.ENTITY_CREATION.shouldRender(entity))
-        RenderHandler.addCuboid(entity, stroke, fill, Configs.Renderers.ENTITY_CREATION.config.getIntegerValue());
-    }
+    EntityPositionHelper.onEntitySpawn(level.getEntity(packet.getId()));
+  }
+
+  @Inject(method = "handleRemoveEntities", at = @At(value = "INVOKE", target = mainThreadInjectionPoint, shift = At.Shift.AFTER))
+  private void onEntityKill(ClientboundRemoveEntitiesPacket packet, CallbackInfo ci)
+  {
+    for(int id : packet.getEntityIds())
+      EntityPositionHelper.onEntityDeath(level.getEntity(id));
   }
 }

@@ -88,6 +88,15 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     onAddShape();
   }
 
+  public static void addTrajectory(double x, double y, double z, double X, double Y, double Z, boolean xFirst, Color4f color, int ticks)
+  {
+    if(ticks == -1)
+      shapes.add(new Trajectory(x, y, z, X, Y, Z, xFirst, color).isStatic());
+    else
+      shapes.add(new Trajectory(x, y, z, X, Y, Z, xFirst, color).ticks(ticks));
+    onAddShape();
+  }
+
   public static void addCuboid(BlockPos pos, Color4f stroke, Color4f fill, int ticks)
   {
     addCuboid(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1, stroke, fill, ticks);
@@ -178,6 +187,34 @@ public class RenderHandler implements IRenderer, IClientTickHandler
       buffer.vertex(x-cx, y-cy, z-cz).color(color.r, color.g, color.b, color.a).endVertex();
       buffer.vertex(X-cx, Y-cy, Z-cz).color(color.r, color.g, color.b, color.a).endVertex();
       tessellator.end();
+    }
+  }
+
+  private static class Trajectory extends Shape
+  {
+    private final Line line1, line2, line3;
+
+    public Trajectory(double x, double y, double z, double X, double Y, double Z, boolean xFirst, Color4f color)
+    {
+      line1 = new Line(x, y, z, x, Y, z, color);
+      if(xFirst)
+      {
+        line2 = new Line(x, Y, z, X, Y, z, color);
+        line3 = new Line(X, Y, z, X, Y, Z, color);
+      }
+      else
+      {
+        line2 = new Line(x, Y, z, x, Y, Z, color);
+        line3 = new Line(x, Y, Z, X, Y, Z, color);
+      }
+    }
+
+    @Override
+    public void render(double cx, double cy, double cz)
+    {
+      line1.render(cx, cy, cz);
+      line2.render(cx, cy, cz);
+      line3.render(cx, cy, cz);
     }
   }
 

@@ -15,7 +15,7 @@ import me.lntricate.entityvisualizer.config.Configs;
 
 public class GuiConfigs extends GuiConfigsBase
 {
-  private static ConfigGuiTab tab = ConfigGuiTab.RENDERERS;
+  private static ConfigGuiTab tab = ConfigGuiTab.GENERIC;
 
   public GuiConfigs()
   {
@@ -24,8 +24,9 @@ public class GuiConfigs extends GuiConfigsBase
 
   public static enum ConfigGuiTab
   {
-    GENERIC("entityvisualizer.gui.button.config_gui.generic", Configs.Generic.OPTIONS, 200),
-    RENDERERS("entityvisualizer.gui.button.config_gui.renderers", Configs.Renderers.getOptions(), 200);
+    GENERIC("entityvisualizer.gui.button.config_gui.generic", Configs.Generic.getOptions(), 200),
+    RENDERERS("entityvisualizer.gui.button.config_gui.renderers", Configs.Renderers.getOptions(), 200),
+    LISTS("entityvisualizer.gui.button.config_gui.lists", Configs.Lists.getOptions(), 200);
 
     private final String translationKey;
     private final ImmutableList<IConfigBase> OPTIONS;
@@ -58,11 +59,11 @@ public class GuiConfigs extends GuiConfigsBase
   public void initGui()
   {
     super.initGui();
+    clearOptions();
 
     int x = 10;
-    int y = 26;
     for(ConfigGuiTab tab : ConfigGuiTab.values())
-      x += createButton(x, y, tab);
+      x += createButton(x, 26, tab);
   }
 
   @Override

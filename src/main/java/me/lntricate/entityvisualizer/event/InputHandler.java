@@ -1,7 +1,5 @@
 package me.lntricate.entityvisualizer.event;
 
-import com.google.common.collect.ImmutableList;
-
 import fi.dy.masa.malilib.hotkeys.IHotkey;
 import fi.dy.masa.malilib.hotkeys.IKeybindManager;
 import fi.dy.masa.malilib.hotkeys.IKeybindProvider;
@@ -26,17 +24,17 @@ public class InputHandler implements IKeybindProvider, IMouseInputHandler
   @Override
   public void addKeysToMap(IKeybindManager manager)
   {
-    for(Configs.Renderers renderer : Configs.Renderers.values())
-      manager.addKeybindToMap(renderer.config.getKeybind());
-
-    for(IHotkey hotkey : Configs.Generic.HOTKEY_LIST)
+    for(IHotkey hotkey : Configs.Generic.getHotkeys())
       manager.addKeybindToMap(hotkey.getKeybind());
+
+    for(IHotkey renderer : Configs.Renderers.getHotkeys())
+      manager.addKeybindToMap(renderer.getKeybind());
   }
 
   @Override
   public void addHotkeys(IKeybindManager manager)
   {
-    manager.addHotkeysForCategory(EntityVisualizerMod.MOD_NAME, "entityvisualizer.hotkeys.category.renderer_hotkeys", ImmutableList.copyOf(Configs.Renderers.getHotkeys()));
-    manager.addHotkeysForCategory(EntityVisualizerMod.MOD_NAME, "entityvisualizer.hotkeys.category.generic_hotkeys", Configs.Generic.HOTKEY_LIST);
+    manager.addHotkeysForCategory(EntityVisualizerMod.MOD_NAME, "entityvisualizer.hotkeys.category.generic_hotkeys", Configs.Generic.getHotkeys());
+    manager.addHotkeysForCategory(EntityVisualizerMod.MOD_NAME, "entityvisualizer.hotkeys.category.renderer_hotkeys", Configs.Renderers.getHotkeys());
   }
 }

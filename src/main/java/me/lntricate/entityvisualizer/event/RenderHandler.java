@@ -14,9 +14,13 @@ import com.mojang.math.Matrix4f;
 
 import fi.dy.masa.malilib.interfaces.IClientTickHandler;
 import fi.dy.masa.malilib.interfaces.IRenderer;
+import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.Color4f;
+import me.lntricate.entityvisualizer.config.Configs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 public class RenderHandler implements IRenderer, IClientTickHandler
@@ -37,6 +41,7 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     double cx = cpos.x(); double cy = cpos.y(); double cz = cpos.z();
 
     RenderSystem.setShader(GameRenderer::getPositionColorShader);
+    RenderUtils.setupBlend();
     RenderSystem.disableDepthTest();
 
     // INEFFICIENT but i don't know how else to avoid concurrent access to shapes
@@ -68,17 +73,39 @@ public class RenderHandler implements IRenderer, IClientTickHandler
       shape.removeStatic();
   }
 
+  private static void onAddShape()
+  {
+    if(shapes.size() > Configs.Generic.MAX_RENDERS.getIntegerValue())
+      shapes.remove(0);
+  }
+
   public static void addLine(double x, double y, double z, double X, double Y, double Z, Color4f color, int ticks)
   {
     if(ticks == -1)
       shapes.add(new Line(x, y, z, X, Y, Z, color).isStatic());
     else
       shapes.add(new Line(x, y, z, X, Y, Z, color).ticks(ticks));
+    onAddShape();
+  }
+
+  public static void addCuboid(BlockPos pos, Color4f stroke, Color4f fill, int ticks)
+  {
+    addCuboid(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1, stroke, fill, ticks);
+  }
+
+  public static void addCuboid(Entity entity, Color4f stroke, Color4f fill, int ticks)
+  {
+    addCuboid(entity.getX(), entity.getY(), entity.getZ(), entity.getBbWidth()/2, entity.getBbHeight(), stroke, fill, ticks);
+  }
+
+  public static void addCuboid(double x, double y, double z, double sizeW, double sizeH, Color4f stroke, Color4f fill, int ticks)
+  {
+    addCuboid(x - sizeW, y, z - sizeW, x + sizeW, y + sizeH, z + sizeW, stroke, fill, ticks);
   }
 
   public static void addCuboid(double x, double y, double z, double size, Color4f stroke, Color4f fill, int ticks)
   {
-    addCuboid(x + size, y + size, z + size, x - size, y - size, z - size, stroke, fill, ticks);
+    addCuboid(x - size, y - size, z - size, x + size, y + size, z + size, stroke, fill, ticks);
   }
 
   public static void addCuboid(double x, double y, double z, double X, double Y, double Z, Color4f stroke, Color4f fill, int ticks)
@@ -87,6 +114,7 @@ public class RenderHandler implements IRenderer, IClientTickHandler
       shapes.add(new Cuboid(x, y, z, X, Y, Z, stroke, fill).isStatic());
     else
       shapes.add(new Cuboid(x, y, z, X, Y, Z, stroke, fill).ticks(ticks));
+    onAddShape();
   }
 
   private static abstract class Shape

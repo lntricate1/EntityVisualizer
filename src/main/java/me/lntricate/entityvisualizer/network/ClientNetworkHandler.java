@@ -22,7 +22,7 @@ public class ClientNetworkHandler
 
     int id = data.readVarInt();
     if(id == NetworkStuff.HI)
-      setPacketRecievingState(Configs.Renderers.ENTITY_TICKS.config.getBooleanValue() || Configs.Renderers.ENTITY_TRAJECTORY.config.getBooleanValue());
+      setPacketRecievingState(Configs.Renderers.requireEntityPackets());
     if(id == NetworkStuff.DATA)
       handleEntityPacket(data);
   }

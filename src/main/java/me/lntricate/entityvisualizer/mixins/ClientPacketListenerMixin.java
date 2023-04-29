@@ -10,8 +10,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import fi.dy.masa.malilib.util.Color4f;
 import me.lntricate.entityvisualizer.config.Configs;
+import me.lntricate.entityvisualizer.config.Configs.Lists;
+import me.lntricate.entityvisualizer.config.Configs.Renderers;
 import me.lntricate.entityvisualizer.event.RenderHandler;
 import me.lntricate.entityvisualizer.helpers.EntityPositionHelper;
 import me.lntricate.entityvisualizer.helpers.ExplosionHelper;
@@ -56,44 +57,48 @@ public class ClientPacketListenerMixin
     double z = packet.getZ();
     float power = packet.getPower();
 
-    // MAKE THIS CUSTOMIZABLE
-    double explosionBoxSize = 0.125;
-    Color4f explosionBoxStroke = new Color4f(0F, 0F, 0F, 1F);
-    Color4f explosionBoxFill = new Color4f(0F, 1F, 1F, 0.26F);
+    if(Renderers.EXPLOSIONS.config.on())
+      RenderHandler.addCuboid(x, y, z, Configs.Generic.EXPLOSION_BOX_SIZE.getDoubleValue()/2, Renderers.EXPLOSIONS.config.color1(), Renderers.EXPLOSIONS.config.color2(), Renderers.EXPLOSIONS.config.dur());
 
-    if(Configs.Renderers.EXPLOSIONS.config.getBooleanValue())
-      RenderHandler.addCuboid(x, y, z, explosionBoxSize, explosionBoxStroke, explosionBoxFill, Configs.Renderers.EXPLOSIONS.config.getIntegerValue());
-
-    if(Configs.Renderers.EXPLOSION_ENTITY_RAYS.config.getBooleanValue())
+    if(Renderers.EXPLOSION_ENTITY_RAYS.config.on())
     {
       List<Entity> entities = level.getEntities(null, new AABB(
         x - power*2 - 1, y - power*2 - 1, z - power*2 - 1,
         x + power*2 + 1, y + power*2 + 1, z + power*2 + 1));
       for(Entity entity : entities)
-        if(Configs.Lists.EXPLOSION_ENTITY_RAYS.shouldRender(entity))
+        if(Lists.EXPLOSION_ENTITY_RAYS.shouldRender(entity))
           for(Pair<Vec3, Boolean> ray : ExplosionHelper.getExposurePoints(x, y, z, power, entity))
           {
             Vec3 pos = ray.getLeft();
-            Color4f hitColor = new Color4f(0, 1, 0);
-            Color4f missColor = new Color4f(1, 0, 0);
-            RenderHandler.addLine(x, y, z, pos.x(), pos.y(), pos.z(), ray.getRight() ? hitColor : missColor, Configs.Renderers.EXPLOSION_ENTITY_RAYS.config.getIntegerValue());
+            RenderHandler.addLine(
+              x, y, z,
+              pos.x(), pos.y(), pos.z(),
+              ray.getRight() ? Renderers.EXPLOSION_ENTITY_RAYS.config.color1() : Renderers.EXPLOSION_ENTITY_RAYS.config.color2(),
+              Renderers.EXPLOSION_ENTITY_RAYS.config.dur());
           }
     }
 
-    if(Configs.Renderers.EXPLOSION_MIN_BLOCKS.config.getBooleanValue())
+    if(Renderers.EXPLOSION_BLOCK_RAYS.config.on())
+      for(Vec3 ray : ExplosionHelper.getBlockRays(x, y, z, power))
+        RenderHandler.addLine(x, y, z, ray.x, ray.y, ray.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color1(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
+
+    if(Renderers.EXPLOSION_MIN_BLOCKS.config.on())
       for(Pair<BlockPos, BlockState> pair : ExplosionHelper.getAffectedBlocks(x, y, z, power, level, 0F))
-        if(Configs.Lists.EXPLOSION_MIN_BLOCKS.shouldRender(pair.getRight().getBlock()))
-          RenderHandler.addCuboid(pair.getLeft(), explosionBoxStroke, explosionBoxFill, Configs.Renderers.EXPLOSION_MIN_BLOCKS.config.getIntegerValue());
+      {
+        System.out.println(pair.getRight().getBlock().getDescriptionId());
+        if(Lists.EXPLOSION_MIN_BLOCKS.shouldRender(pair.getRight().getBlock()))
+          RenderHandler.addCuboid(pair.getLeft(), Renderers.EXPLOSION_MIN_BLOCKS.config.color1(), Renderers.EXPLOSION_MIN_BLOCKS.config.color2(), Renderers.EXPLOSION_MIN_BLOCKS.config.dur());
+      }
 
-    if(Configs.Renderers.EXPLOSION_MAX_BLOCKS.config.getBooleanValue())
+    if(Renderers.EXPLOSION_MAX_BLOCKS.config.on())
       for(Pair<BlockPos, BlockState> pair : ExplosionHelper.getAffectedBlocks(x, y, z, power, level, 1F))
-        if(Configs.Lists.EXPLOSION_MAX_BLOCKS.shouldRender(pair.getRight().getBlock()))
-          RenderHandler.addCuboid(pair.getLeft(), explosionBoxStroke, explosionBoxFill, Configs.Renderers.EXPLOSION_MAX_BLOCKS.config.getIntegerValue());
+        if(Lists.EXPLOSION_MAX_BLOCKS.shouldRender(pair.getRight().getBlock()))
+          RenderHandler.addCuboid(pair.getLeft(), Renderers.EXPLOSION_MAX_BLOCKS.config.color1(), Renderers.EXPLOSION_MAX_BLOCKS.config.color2(), Renderers.EXPLOSION_MAX_BLOCKS.config.dur());
 
-    if(Configs.Renderers.EXPLOSION_AFFECTED_BLOCKS.config.getBooleanValue())
+    if(Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
       for(BlockPos pos : packet.getToBlow())
-        if(Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(level.getBlockState(pos).getBlock()))
-          RenderHandler.addCuboid(pos, explosionBoxStroke, explosionBoxFill, Configs.Renderers.EXPLOSION_AFFECTED_BLOCKS.config.getIntegerValue());
+        if(Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(level.getBlockState(pos).getBlock()))
+          RenderHandler.addCuboid(pos, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color1(), Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color2(), Renderers.EXPLOSION_AFFECTED_BLOCKS.config.dur());
   }
 
   @Inject(method = "handleAddEntity", at = @At("TAIL"))

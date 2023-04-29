@@ -53,37 +53,53 @@ public class ExplosionHelper
     for(int i = 0; i < 16; ++i)
       for(int j = 0; j < 16; ++j)
         for(int k = 0; k < 16; ++k)
+          if(i==0 || i==15 || j==0 || j==15 || k==0 || k==15)
     {
-      if(i==0 || i==15 || j==0 || j==15 || k==0 || k==15)
+      double dx = (float)i / 15F * 2F - 1F;
+      double dy = (float)j / 15F * 2F - 1F;
+      double dz = (float)k / 15F * 2F - 1F;
+      double mag = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      dx = dx / mag * 0.3F;
+      dy = dy / mag * 0.3F;
+      dz = dz / mag * 0.3F;
+      double x = sx;
+      double y = sy;
+      double z = sz;
+      for(float h = power * (0.7F + random * 0.6F); h > 0F; h -= 0.22500001F)
       {
-        double dx = (float)i / 15F * 2F - 1F;
-        double dy = (float)j / 15F * 2F - 1F;
-        double dz = (float)k / 15F * 2F - 1F;
-        double mag = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        dx = dx / mag * 0.30000001192092896;
-        dy = dy / mag * 0.30000001192092896;
-        dz = dz / mag * 0.30000001192092896;
-        double x = sx;
-        double y = sy;
-        double z = sz;
-        for(float h = power * (0.7F + random * 0.6F); h > 0F; h -= 0.22500001F)
+        BlockPos blockPos = new BlockPos(x, y, z);
+        if(!level.isInWorldBounds(blockPos)) break;
+        BlockState blockState = level.getBlockState(blockPos);
+        FluidState fluidState = level.getFluidState(blockPos);
+        Optional<Float> optional = blockState.isAir() && fluidState.isEmpty() ? Optional.empty() : Optional.of(Math.max(blockState.getBlock().getExplosionResistance(), fluidState.getExplosionResistance()));
+        if(optional.isPresent())
         {
-          BlockPos blockPos = new BlockPos(x, y, z);
-          if(!level.isInWorldBounds(blockPos)) break;
-          BlockState blockState = level.getBlockState(blockPos);
-          FluidState fluidState = level.getFluidState(blockPos);
-          Optional<Float> optional = blockState.isAir() && fluidState.isEmpty() ? Optional.empty() : Optional.of(Math.max(blockState.getBlock().getExplosionResistance(), fluidState.getExplosionResistance()));
-          if(optional.isPresent())
-          {
-            h -= (optional.get() + 0.3F) * 0.3F;
-          }
-          if(h > 0)
-            positions.add(Pair.of(blockPos, blockState));
-          x += dx;
-          y += dy;
-          z += dz;
+          h -= (optional.get() + 0.3F) * 0.3F;
         }
+        if(h > 0)
+          positions.add(Pair.of(blockPos, blockState));
+        x += dx;
+        y += dy;
+        z += dz;
       }
+    }
+    return positions;
+  }
+
+  public static Set<Vec3> getBlockRays(double sx, double sy, double sz, float power)
+  {
+    Set<Vec3> positions = new HashSet<>();
+    for(int i = 0; i < 16; ++i)
+      for(int j = 0; j < 16; ++j)
+        for(int k = 0; k < 16; ++k)
+          if(i==0 || i==15 || j==0 || j==15 || k==0 || k==15)
+    {
+      double dx = (float)i / 15F * 2F - 1F;
+      double dy = (float)j / 15F * 2F - 1F;
+      double dz = (float)k / 15F * 2F - 1F;
+      double mag = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      int length = (int)Math.ceil(power * (0.7F + 0.6F) / 0.22500001F);
+      positions.add(new Vec3(sx + dx / mag * 0.3F * length, sy + dy / mag * 0.3F * length, sz + dz / mag * 0.3F * length));
     }
     return positions;
   }

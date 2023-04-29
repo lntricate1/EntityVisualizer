@@ -3,7 +3,7 @@ package me.lntricate.entityvisualizer;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 
-import me.lntricate.entityvisualizer.config.gui.GuiConfigs;
+import me.lntricate.entityvisualizer.gui.GuiConfigs;
 
 public class ModMenuImpl implements ModMenuApi
 {

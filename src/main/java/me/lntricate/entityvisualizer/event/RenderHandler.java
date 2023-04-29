@@ -1,8 +1,10 @@
 package me.lntricate.entityvisualizer.event;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -97,27 +99,27 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     onAddShape();
   }
 
-  public static void addCuboid(BlockPos pos, Color4f stroke, Color4f fill, int ticks)
+  public static void addCuboid(BlockPos pos, Color4f fill, Color4f stroke, int ticks)
   {
-    addCuboid(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1, stroke, fill, ticks);
+    addCuboid(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1, fill, stroke, ticks);
   }
 
-  public static void addCuboid(Entity entity, Color4f stroke, Color4f fill, int ticks)
+  public static void addCuboid(Entity entity, Color4f fill, Color4f stroke, int ticks)
   {
-    addCuboid(entity.getX(), entity.getY(), entity.getZ(), entity.getBbWidth()/2, entity.getBbHeight(), stroke, fill, ticks);
+    addCuboid(entity.getX(), entity.getY(), entity.getZ(), entity.getBbWidth()/2, entity.getBbHeight(), fill, stroke, ticks);
   }
 
-  public static void addCuboid(double x, double y, double z, double sizeW, double sizeH, Color4f stroke, Color4f fill, int ticks)
+  public static void addCuboid(double x, double y, double z, double sizeW, double sizeH, Color4f fill, Color4f stroke, int ticks)
   {
-    addCuboid(x - sizeW, y, z - sizeW, x + sizeW, y + sizeH, z + sizeW, stroke, fill, ticks);
+    addCuboid(x - sizeW, y, z - sizeW, x + sizeW, y + sizeH, z + sizeW, fill, stroke, ticks);
   }
 
-  public static void addCuboid(double x, double y, double z, double size, Color4f stroke, Color4f fill, int ticks)
+  public static void addCuboid(double x, double y, double z, double size, Color4f fill, Color4f stroke, int ticks)
   {
-    addCuboid(x - size, y - size, z - size, x + size, y + size, z + size, stroke, fill, ticks);
+    addCuboid(x - size, y - size, z - size, x + size, y + size, z + size, fill, stroke, ticks);
   }
 
-  public static void addCuboid(double x, double y, double z, double X, double Y, double Z, Color4f stroke, Color4f fill, int ticks)
+  public static void addCuboid(double x, double y, double z, double X, double Y, double Z, Color4f fill, Color4f stroke, int ticks)
   {
     if(ticks == -1)
       shapes.add(new Cuboid(x, y, z, X, Y, Z, stroke, fill).isStatic());
@@ -248,35 +250,38 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
   private static class Cuboid extends Shape
   {
-    private final Shape[] shapes;
+    private final Set<Shape> shapes;
 
     public Cuboid(double x, double y, double z, double X, double Y, double Z, Color4f stroke, Color4f fill)
     {
-      shapes = new Shape[]
+      shapes = new HashSet<>();
+      if(fill.a > 0)
       {
-        new Quad(x, y, z, x, Y, z, x, Y, Z, x, y, Z, fill),
-        new Quad(X, y, z, X, y, Z, X, Y, Z, X, Y, z, fill),
+        shapes.add(new Quad(x, y, z, x, Y, z, x, Y, Z, x, y, Z, fill));
+        shapes.add(new Quad(X, y, z, X, y, Z, X, Y, Z, X, Y, z, fill));
 
-        new Quad(x, y, z, x, y, Z, X, y, Z, X, y, z, fill),
-        new Quad(x, Y, z, X, Y, z, X, Y, Z, x, Y, Z, fill),
+        shapes.add(new Quad(x, y, z, x, y, Z, X, y, Z, X, y, z, fill));
+        shapes.add(new Quad(x, Y, z, X, Y, z, X, Y, Z, x, Y, Z, fill));
 
-        new Quad(x, y, z, X, y, z, X, Y, z, x, Y, z, fill),
-        new Quad(x, y, Z, x, Y, Z, X, Y, Z, X, y, Z, fill),
+        shapes.add(new Quad(x, y, z, X, y, z, X, Y, z, x, Y, z, fill));
+        shapes.add(new Quad(x, y, Z, x, Y, Z, X, Y, Z, X, y, Z, fill));
+      }
+      if(stroke.a > 0)
+      {
+        shapes.add(new Line(x, y, z, X, y, z, stroke));
+        shapes.add(new Line(X, y, z, X, Y, z, stroke));
+        shapes.add(new Line(X, Y, z, x, Y, z, stroke));
+        shapes.add(new Line(x, Y, z, x, y, z, stroke));
 
-        new Line(x, y, z, X, y, z, stroke),
-        new Line(X, y, z, X, Y, z, stroke),
-        new Line(X, Y, z, x, Y, z, stroke),
-        new Line(x, Y, z, x, y, z, stroke),
+        shapes.add(new Line(x, y, z, x, y, Z, stroke));
+        shapes.add(new Line(X, y, z, X, y, Z, stroke));
+        shapes.add(new Line(X, Y, z, X, Y, Z, stroke));
+        shapes.add(new Line(x, Y, z, x, Y, Z, stroke));
 
-        new Line(x, y, z, x, y, Z, stroke),
-        new Line(X, y, z, X, y, Z, stroke),
-        new Line(X, Y, z, X, Y, Z, stroke),
-        new Line(x, Y, z, x, Y, Z, stroke),
-
-        new Line(x, y, Z, X, y, Z, stroke),
-        new Line(X, y, Z, X, Y, Z, stroke),
-        new Line(X, Y, Z, x, Y, Z, stroke),
-        new Line(x, Y, Z, x, y, Z, stroke)
+        shapes.add(new Line(x, y, Z, X, y, Z, stroke));
+        shapes.add(new Line(X, y, Z, X, Y, Z, stroke));
+        shapes.add(new Line(X, Y, Z, x, Y, Z, stroke));
+        shapes.add(new Line(x, Y, Z, x, y, Z, stroke));
       };
     }
 

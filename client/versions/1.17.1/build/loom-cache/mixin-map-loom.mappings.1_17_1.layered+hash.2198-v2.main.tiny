@@ -1,0 +1,3 @@
+v1	named	intermediary
+FIELD	me/lntricate/entityvisualizer/mixins/ClientPacketListenerMixin	Lnet/minecraft/client/Minecraft;	minecraft	field_3690
+FIELD	me/lntricate/entityvisualizer/mixins/ClientPacketListenerMixin	Lnet/minecraft/client/multiplayer/ClientLevel;	level	field_3699

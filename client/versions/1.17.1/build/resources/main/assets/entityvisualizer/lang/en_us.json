@@ -1,0 +1,9 @@
+{
+  "entityvisualizer.gui.title.configs": "EntityVisualizer Configs",
+
+  "entityvisualizer.gui.button.config_gui.generic": "Generic",
+  "entityvisualizer.gui.button.config_gui.renderers": "Renderers",
+  "entityvisualizer.gui.button.config_gui.lists": "Lists",
+
+  "config.comment.explosions": "Shows boxes at explosions"
+}

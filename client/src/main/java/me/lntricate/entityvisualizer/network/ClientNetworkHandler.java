@@ -37,6 +37,7 @@ public class ClientNetworkHandler
       tag.getInt("id"),
       tag.getBoolean("self"),
       tag.getDouble("x"), tag.getDouble("y"), tag.getDouble("z"),
-      tag.getBoolean("xFirst"));
+      tag.getBoolean("xFirst"),
+      tag.getBoolean("coll"));
   }
 }

@@ -5,6 +5,12 @@ build/
 out/
 classes/
 
+versions/*/.gradle/
+versions/*/build/
+versions/*/out/
+versions/*/classes/
+versions/*/.factorypath/
+
 # eclipse
 
 *.launch

@@ -36,7 +36,7 @@ public class ServerNetworkHandler
     player.connection.send(new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(NetworkStuff.HI)));
   }
 
-  public static void sendEntity(ServerLevel level, int id, Vec3 pos, boolean self, boolean xFirst)
+  public static void sendEntity(ServerLevel level, int id, Vec3 pos, boolean self, boolean xFirst, boolean nocollide)
   {
     CompoundTag tag = new CompoundTag();
     tag.putInt("id", id);
@@ -45,6 +45,7 @@ public class ServerNetworkHandler
     tag.putDouble("z", pos.z);
     tag.putBoolean("self", self);
     tag.putBoolean("xFirst", xFirst);
+    tag.putBoolean("coll", nocollide);
 
     FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
     packetBuf.writeVarInt(NetworkStuff.DATA);

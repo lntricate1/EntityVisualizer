@@ -4,9 +4,11 @@
   "package": "me.lntricate.entityvisualizerserver.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "AbstractArrowMixin",
     "EntityMixin",
     "PlayerListMixin",
-    "ServerGamePacketListenerImplMixin"
+    "ServerGamePacketListenerImplMixin",
+    "ThrowableProjectileMixin"
   ],
   "injectors": {
     "defaultRequire": 1

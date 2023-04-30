@@ -43,13 +43,13 @@ public class EntityPositionHelper
     registerType(entity.getId(), type);
   }
 
-  public static void onEntityMove(int id, boolean isSelfMovementType, double x, double y, double z, boolean xFirst)
+  public static void onEntityMove(int id, boolean isSelfMovementType, double x, double y, double z, boolean xFirst, boolean nocollide)
   {
     EntityType<?> type = types.get(id);
-    Minecraft mc = Minecraft.getInstance();
-    Entity entity = mc.level.getEntity(id);
     if(type == null)
     {
+      Minecraft mc = Minecraft.getInstance();
+      Entity entity = mc.level.getEntity(id);
       if(entity == null)
         return;
       type = entity.getType();
@@ -60,17 +60,15 @@ public class EntityPositionHelper
         RenderHandler.addCuboid(x, y, z, type.getWidth()/2, type.getHeight(), Configs.Renderers.ENTITY_TICKS.config.color1(), Configs.Renderers.ENTITY_TICKS.config.color2(), Configs.Renderers.ENTITY_TICKS.config.dur());
 
     if(Configs.Renderers.ENTITY_TRAJECTORY.config.on())
-      if(entity != null)
-        if(Configs.Lists.ENTITY_TRAJECTORY.shouldRender(type))
-        {
-          boolean nocollide = entity.noPhysics || entity instanceof Projectile;
-          Vec3 pos = prevPos.get(id);
-          Color4f stroke = isSelfMovementType ? Configs.Renderers.ENTITY_TRAJECTORY.config.color1() : Configs.Renderers.ENTITY_TRAJECTORY.config.color2();
-          if(nocollide)
-            RenderHandler.addLine(pos.x, pos.y, pos.z, x, y, z, stroke, Configs.Renderers.ENTITY_TRAJECTORY.config.dur());
-          else
-            RenderHandler.addTrajectory(pos.x, pos.y, pos.z, x, y, z, xFirst, stroke, Configs.Renderers.ENTITY_TRAJECTORY.config.dur());
-        }
+      if(Configs.Lists.ENTITY_TRAJECTORY.shouldRender(type))
+      {
+        Vec3 pos = prevPos.get(id);
+        Color4f stroke = isSelfMovementType ? Configs.Renderers.ENTITY_TRAJECTORY.config.color1() : Configs.Renderers.ENTITY_TRAJECTORY.config.color2();
+        if(nocollide)
+          RenderHandler.addLine(pos.x, pos.y, pos.z, x, y, z, stroke, Configs.Renderers.ENTITY_TRAJECTORY.config.dur());
+        else
+          RenderHandler.addTrajectory(pos.x, pos.y, pos.z, x, y, z, xFirst, stroke, Configs.Renderers.ENTITY_TRAJECTORY.config.dur());
+      }
     registerPos(id, new Vec3(x, y, z));
   }
 

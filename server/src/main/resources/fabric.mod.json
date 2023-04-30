@@ -16,9 +16,6 @@
 
   "environment": "*",
   "entrypoints": {
-    "main": [
-      "me.lntricate.entityvisualizerserver.EntityVisualizerMod"
-    ]
   },
   "mixins": [
     "entityvisualizerserver.mixins.json"

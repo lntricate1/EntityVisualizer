@@ -51,7 +51,10 @@ public class EntityPositionHelper
       Minecraft mc = Minecraft.getInstance();
       Entity entity = mc.level.getEntity(id);
       if(entity == null)
+      {
+        registerPos(id, new Vec3(x, y, z));
         return;
+      }
       type = entity.getType();
     }
 
@@ -60,15 +63,17 @@ public class EntityPositionHelper
         RenderHandler.addCuboid(x, y, z, type.getWidth()/2, type.getHeight(), Configs.Renderers.ENTITY_TICKS.config.color1(), Configs.Renderers.ENTITY_TICKS.config.color2(), Configs.Renderers.ENTITY_TICKS.config.dur());
 
     if(Configs.Renderers.ENTITY_TRAJECTORY.config.on())
-      if(Configs.Lists.ENTITY_TRAJECTORY.shouldRender(type))
+    {
+      Vec3 pos = prevPos.get(id);
+      if(pos != null && Configs.Lists.ENTITY_TRAJECTORY.shouldRender(type))
       {
-        Vec3 pos = prevPos.get(id);
         Color4f stroke = isSelfMovementType ? Configs.Renderers.ENTITY_TRAJECTORY.config.color1() : Configs.Renderers.ENTITY_TRAJECTORY.config.color2();
         if(nocollide)
           RenderHandler.addLine(pos.x, pos.y, pos.z, x, y, z, stroke, Configs.Renderers.ENTITY_TRAJECTORY.config.dur());
         else
           RenderHandler.addTrajectory(pos.x, pos.y, pos.z, x, y, z, xFirst, stroke, Configs.Renderers.ENTITY_TRAJECTORY.config.dur());
       }
+    }
     registerPos(id, new Vec3(x, y, z));
   }
 
@@ -76,10 +81,22 @@ public class EntityPositionHelper
   {
     if(Configs.Renderers.ENTITY_DEATHS.config.on())
     {
-      EntityType<?> type = types.get(id);
-      if(type != null)
+      Vec3 pos = prevPos.get(id);
+      if(pos != null)
       {
-        Vec3 pos = prevPos.get(id);
+        EntityType<?> type = types.get(id);
+        if(type == null)
+        {
+          Minecraft mc = Minecraft.getInstance();
+          Entity entity = mc.level.getEntity(id);
+          if(entity == null)
+          {
+            prevPos.remove(id);
+            types.remove(id);
+            return;
+          }
+          type = entity.getType();
+        }
         if(Configs.Lists.ENTITY_DEATHS.shouldRender(type))
           RenderHandler.addCuboid(pos.x, pos.y, pos.z, type.getWidth()/2, type.getHeight(), Configs.Renderers.ENTITY_DEATHS.config.color1(), Configs.Renderers.ENTITY_DEATHS.config.color2(), Configs.Renderers.ENTITY_DEATHS.config.dur());
       }

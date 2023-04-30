@@ -66,7 +66,7 @@ public class ClientPacketListenerMixin
         x - power*2 - 1, y - power*2 - 1, z - power*2 - 1,
         x + power*2 + 1, y + power*2 + 1, z + power*2 + 1));
       for(Entity entity : entities)
-        if(Lists.EXPLOSION_ENTITY_RAYS.shouldRender(entity))
+        if(Lists.EXPLOSION_ENTITY_RAYS.shouldRender(entity.getType()))
           for(Pair<Vec3, Boolean> ray : ExplosionHelper.getExposurePoints(x, y, z, power, entity))
           {
             Vec3 pos = ray.getLeft();
@@ -110,6 +110,6 @@ public class ClientPacketListenerMixin
   private void onEntityKill(ClientboundRemoveEntitiesPacket packet, CallbackInfo ci)
   {
     for(int id : packet.getEntityIds())
-      EntityPositionHelper.onEntityDeath(level.getEntity(id));
+      EntityPositionHelper.onEntityDeath(id);
   }
 }

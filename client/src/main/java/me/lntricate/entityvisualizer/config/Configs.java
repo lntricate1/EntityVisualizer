@@ -18,6 +18,7 @@ import me.lntricate.entityvisualizer.malilib.config.options.EConfigWBList;
 import me.lntricate.entityvisualizer.network.ClientNetworkHandler;
 import net.minecraft.core.Registry;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
 
 public class Configs implements IConfigHandler
@@ -188,9 +189,9 @@ public class Configs implements IConfigHandler
       return ImmutableList.of();
     }
 
-    public boolean shouldRender(Entity entity)
+    public boolean shouldRender(EntityType<?> type)
     {
-      return config.test(entity.getType().toShortString());
+      return config.test(type.toShortString());
     }
 
     public boolean shouldRender(Block block)

@@ -1,7 +1,0 @@
-v1	named	intermediary
-FIELD	me/lntricate/entityvisualizer/mixins/ServerGamePacketListenerImplMixin	Lnet/minecraft/server/level/ServerPlayer;	player	field_14140
-FIELD	me/lntricate/entityvisualizer/mixins/EntityMixin	Lnet/minecraft/world/phys/Vec3;	position	field_22467
-FIELD	me/lntricate/entityvisualizer/mixins/EntityMixin	Lnet/minecraft/world/level/Level;	level	field_6002
-FIELD	me/lntricate/entityvisualizer/mixins/EntityMixin	I	id	field_5986
-FIELD	me/lntricate/entityvisualizer/mixins/ClientPacketListenerMixin	Lnet/minecraft/client/Minecraft;	minecraft	field_3690
-FIELD	me/lntricate/entityvisualizer/mixins/ClientPacketListenerMixin	Lnet/minecraft/client/multiplayer/ClientLevel;	level	field_3699

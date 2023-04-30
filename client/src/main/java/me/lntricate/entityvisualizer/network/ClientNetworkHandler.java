@@ -8,8 +8,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.projectile.Projectile;
 
 public class ClientNetworkHandler
 {
@@ -35,12 +33,10 @@ public class ClientNetworkHandler
   private static void handleEntityPacket(FriendlyByteBuf data)
   {
     CompoundTag tag = data.readNbt();
-    Entity entity = minecraft.level.getEntity(tag.getInt("id"));
-    boolean nocollide = entity.noPhysics || entity instanceof Projectile;
     EntityPositionHelper.onEntityMove(
-      entity,
+      tag.getInt("id"),
       tag.getBoolean("self"),
       tag.getDouble("x"), tag.getDouble("y"), tag.getDouble("z"),
-      nocollide, tag.getBoolean("xFirst"));
+      tag.getBoolean("xFirst"));
   }
 }

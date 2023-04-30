@@ -1,47 +1,76 @@
 package me.lntricate.entityvisualizer.config;
 
+import java.io.File;
+
 import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import fi.dy.masa.malilib.config.ConfigUtils;
 import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.config.IConfigHandler;
 import fi.dy.masa.malilib.config.options.ConfigBoolean;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
+import fi.dy.masa.malilib.util.FileUtils;
+import fi.dy.masa.malilib.util.JsonUtils;
 import fi.dy.masa.malilib.util.restrictions.UsageRestriction.ListType;
+import me.lntricate.entityvisualizer.EntityVisualizerMod;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigBoolean;
-import me.lntricate.entityvisualizer.malilib.config.options.EConfigColor;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigDouble;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigHotkey;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigInteger;
-import me.lntricate.entityvisualizer.malilib.config.options.EConfigOptionList;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigRenderer;
-import me.lntricate.entityvisualizer.malilib.config.options.EConfigStringList;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigWBList;
 import me.lntricate.entityvisualizer.network.ClientNetworkHandler;
-import net.minecraft.core.Registry;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
 
 public class Configs implements IConfigHandler
 {
+  private static final String CONFIG_FILE_NAME = EntityVisualizerMod.MOD_ID + ".json";
+
   @Override
   public void load()
-  {}
+  {
+    File configFile = new File(FileUtils.getConfigDirectory(), CONFIG_FILE_NAME);
+
+    if(configFile.exists() && configFile.isFile() && configFile.canRead())
+    {
+      JsonElement element = JsonUtils.parseJsonFile(configFile);
+
+      if(element != null && element.isJsonObject())
+      {
+        JsonObject root = element.getAsJsonObject();
+
+        ConfigUtils.readConfigBase(root, "Generic", Generic.getOptions());
+        ConfigUtils.readConfigBase(root, "Renderers", Renderers.getOptions());
+        ConfigUtils.readConfigBase(root, "Lists", Lists.getOptions());
+      }
+    }
+  }
 
   @Override
   public void save()
-  {}
+  {
+    File dir = FileUtils.getConfigDirectory();
+
+    if((dir.exists() && dir.isDirectory()) || dir.mkdirs())
+    {
+      JsonObject root = new JsonObject();
+
+      ConfigUtils.writeConfigBase(root, "Generic", Generic.getOptions());
+      ConfigUtils.writeConfigBase(root, "Renderers", Renderers.getOptions());
+      ConfigUtils.writeConfigBase(root, "Lists", Lists.getOptions());
+
+      JsonUtils.writeJsonToFile(root, new File(dir, CONFIG_FILE_NAME));
+    }
+  }
 
   public static class Generic
   {
     public static final EConfigHotkey OPEN_CONFIG_GUI = new EConfigHotkey("openConfigGui", "V,C", "A hotkey to open the in-game Config GUI");
     public static final EConfigInteger MAX_RENDERS = new EConfigInteger("maxRenders", 200, "Maximum number of renderers allowed to render at once");
     public static final EConfigDouble EXPLOSION_BOX_SIZE = new EConfigDouble("explosionBoxSize", 0.25, "Size of the explosion boxes");
-    // public static final EConfigBoolean BOOL_TEST = new EConfigBoolean("boolTest", false, "");
-    // public static final EConfigOptionList OL_TEST = new EConfigOptionList("olTest", ListType.WHITELIST, "");
-    // public static final EConfigStringList STRL_TEST = new EConfigStringList("strlTest", ImmutableList.of("a", "abc"), "");
-    // public static final EConfigHotkey KEY_TEST = new EConfigHotkey("keyTest", "A,B", "");
-    // public static final EConfigColor COL_TEST = new EConfigColor("colTest", "#FF0000FF", "");
-    // public static final EConfigInteger INT_TEST = new EConfigInteger("intTest", 2, "");
 
     public static ImmutableList<IConfigBase> getOptions()
     {

@@ -6,6 +6,7 @@ import java.util.List;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import fi.dy.masa.malilib.config.IConfigBase;
+import fi.dy.masa.malilib.config.IConfigNotifiable;
 import fi.dy.masa.malilib.config.IConfigResettable;
 import fi.dy.masa.malilib.config.IConfigValue;
 import fi.dy.masa.malilib.config.IStringRepresentable;
@@ -122,6 +123,8 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
   @Override
   protected boolean onMouseClickedImpl(int mouseX, int mouseY, int mouseButton)
   {
+    applyNewValueToConfig();
+
     if(super.onMouseClickedImpl(mouseX, mouseY, mouseButton))
       return true;
 
@@ -182,7 +185,6 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
     @Override
     public boolean onTextChange(GuiTextFieldGeneric textField)
     {
-      config.setValueFromString(textField.getValue());
       return false;
     }
   }

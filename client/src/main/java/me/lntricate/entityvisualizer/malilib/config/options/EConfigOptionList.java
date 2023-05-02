@@ -53,8 +53,8 @@ public class EConfigOptionList extends ConfigOptionList implements IEConfigValue
   @Override
   public void createWidgets(EWidgetConfigOption widgetConfigOption, WidgetListConfigOptionsBase<?, ?> parent, int x, int y, int w, int h, IKeybindConfigGui configGui, @Nullable IDialogHandler dialogHandler)
   {
-    widgetConfigOption.addWidgetPublic(new WidgetHoverInfo(x, y, w, h, getComment()));
     widgetConfigOption.addWidgetPublic(new ConfigButtonOptionList(x, y, w, h, this));
+    widgetConfigOption.addWidgetPublic(new WidgetHoverInfo(x, y, w, h, getComment()));
   }
 
   @Override

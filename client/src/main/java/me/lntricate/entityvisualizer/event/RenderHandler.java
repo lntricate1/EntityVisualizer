@@ -77,7 +77,8 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
   private static void onAddShape()
   {
-    if(shapes.size() > Configs.Generic.MAX_RENDERS.getIntegerValue())
+    int max = Configs.Generic.MAX_RENDERS.getIntegerValue();
+    if(max != -1 && shapes.size() > max)
       shapes.remove(0);
   }
 

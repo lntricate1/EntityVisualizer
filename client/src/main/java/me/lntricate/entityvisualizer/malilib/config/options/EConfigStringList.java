@@ -57,8 +57,8 @@ public class EConfigStringList extends ConfigStringList implements IEConfigValue
   @Override
   public void createWidgets(EWidgetConfigOption widgetConfigOption, WidgetListConfigOptionsBase<?, ?> parent, int x, int y, int w, int h, IKeybindConfigGui configGui, @Nullable IDialogHandler dialogHandler)
   {
-    widgetConfigOption.addWidgetPublic(new WidgetHoverInfo(x, y, w, h, getComment()));
     widgetConfigOption.addWidgetPublic(new ConfigButtonStringList(x, y, w, h, this, configGui, dialogHandler));
+    widgetConfigOption.addWidgetPublic(new WidgetHoverInfo(x, y, w, h, getComment()));
   }
 
   @Override

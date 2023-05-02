@@ -24,6 +24,12 @@ public class EConfigInteger extends ConfigInteger implements IEConfigValueGettab
     this.parent = null;
   }
 
+  public EConfigInteger(String name, int defaultValue, int min, int max, String comment)
+  {
+    super(name, defaultValue, min, max, comment);
+    this.parent = null;
+  }
+
   @Override
   public void setParent(EConfigMulti parent)
   {

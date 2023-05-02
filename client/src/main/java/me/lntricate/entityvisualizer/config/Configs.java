@@ -69,7 +69,7 @@ public class Configs implements IConfigHandler
   public static class Generic
   {
     public static final EConfigHotkey OPEN_CONFIG_GUI = new EConfigHotkey("openConfigGui", "V,C", "A hotkey to open the in-game Config GUI");
-    public static final EConfigInteger MAX_RENDERS = new EConfigInteger("maxRenders", 200, "Maximum number of renderers allowed to render at once");
+    public static final EConfigInteger MAX_RENDERS = new EConfigInteger("maxRenders", -1, -1, Integer.MAX_VALUE, "Maximum number of renderers allowed to render at once (set to -1 for no limit)");
     public static final EConfigDouble EXPLOSION_BOX_SIZE = new EConfigDouble("explosionBoxSize", 0.25, "Size of the explosion boxes");
 
     public static ImmutableList<IConfigBase> getOptions()
@@ -87,12 +87,6 @@ public class Configs implements IConfigHandler
       OPEN_CONFIG_GUI,
       MAX_RENDERS,
       EXPLOSION_BOX_SIZE
-      // BOOL_TEST,
-      // OL_TEST,
-      // STRL_TEST,
-      // KEY_TEST,
-      // COL_TEST,
-      // INT_TEST
     );
 
     public static final ImmutableList<IHotkey> HOTKEYS = ImmutableList.of

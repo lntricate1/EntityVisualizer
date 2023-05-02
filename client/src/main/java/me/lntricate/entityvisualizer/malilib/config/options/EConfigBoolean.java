@@ -51,8 +51,8 @@ public class EConfigBoolean extends ConfigBoolean implements IEConfigValueGettab
   @Override
   public void createWidgets(EWidgetConfigOption widgetConfigOption, WidgetListConfigOptionsBase<?, ?> parent, int x, int y, int w, int h, IKeybindConfigGui configGui, @Nullable IDialogHandler dialogHandler)
   {
-    widgetConfigOption.addWidgetPublic(new WidgetHoverInfo(x, y, w, h, getComment()));
     widgetConfigOption.addWidgetPublic(new ConfigButtonBoolean(x, y, w, h, this));
+    widgetConfigOption.addWidgetPublic(new WidgetHoverInfo(x, y, w, h, getComment()));
   }
 
   @Override

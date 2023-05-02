@@ -57,12 +57,13 @@ public class EConfigColor extends ConfigColor implements IEConfigValueGettable<C
   @Override
   public void render(int x, int y, int w, int h)
   {
+    // default malilib rendering, has no opacity
     // RenderUtils.drawRect(x + w - 21, y    , 19, 19, 0xFFFFFFFF);
     // RenderUtils.drawRect(x + w - 20, y + 1, 17, 17, 0xFF000000);
     // RenderUtils.drawRect(x + w - 19, y + 2, 15, 15, 0xFF000000 | getIntegerValue());
 
-    x += w - 21;
-    h -= 1;
+    x += w - 22;
+    h -= 2;
     int X = x + h;
     int Y = y + h;
     RenderUtils.drawRect(x, y, h, 1, 0xFFFFFFFF);

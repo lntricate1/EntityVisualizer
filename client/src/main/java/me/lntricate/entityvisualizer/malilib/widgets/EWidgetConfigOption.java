@@ -140,13 +140,13 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
     for(TextFieldWrapper<? extends GuiTextFieldGeneric> wrapper : textFields)
       if(wrapper.isFocused())
       {
+        boolean ret = wrapper.onKeyTyped(keyCode, scanCode, modifiers);
         if(keyCode == KeyCodes.KEY_ENTER)
         {
-          applyNewValueToConfig();
           return true;
         }
         else
-          return wrapper.onKeyTyped(keyCode, scanCode, modifiers);
+          return ret;
       }
     return false;
   }
@@ -185,6 +185,7 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
     @Override
     public boolean onTextChange(GuiTextFieldGeneric textField)
     {
+      config.setValueFromString(textField.getValue());
       return false;
     }
   }

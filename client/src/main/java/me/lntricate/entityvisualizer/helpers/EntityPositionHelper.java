@@ -9,7 +9,6 @@ import me.lntricate.entityvisualizer.event.RenderHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 
 public class EntityPositionHelper
@@ -33,17 +32,28 @@ public class EntityPositionHelper
       types.put(id, type);
   }
 
+  private static void velocity(EntityType<?> type, double x, double y, double z, double mx, double my, double mz)
+  {
+    if(Configs.Renderers.ENTITY_VELOCITY.config.on())
+      if(Configs.Lists.ENTITY_VELOCITY.shouldRender(type))
+        RenderHandler.addLine(x, y, z, x + mx, y + my, z + mz, Configs.Renderers.ENTITY_VELOCITY.config.color1(), Configs.Renderers.ENTITY_VELOCITY.config.dur());
+  }
+
   public static void onEntitySpawn(Entity entity)
   {
     EntityType<?> type = entity.getType();
     if(Configs.Renderers.ENTITY_CREATION.config.on())
       if(Configs.Lists.ENTITY_CREATION.shouldRender(type))
         RenderHandler.addCuboid(entity, Configs.Renderers.ENTITY_CREATION.config.color1(), Configs.Renderers.ENTITY_CREATION.config.color2(), Configs.Renderers.ENTITY_CREATION.config.dur());
-    registerPos(entity.getId(), entity.position());
+
+    velocity(type, entity.getX(), entity.getY(), entity.getZ(), entity.getDeltaMovement().x, entity.getDeltaMovement().y, entity.getDeltaMovement().z);
+
+    if(Configs.Renderers.requireEntityPackets())
+      registerPos(entity.getId(), entity.position());
     registerType(entity.getId(), type);
   }
 
-  public static void onEntityMove(int id, boolean isSelfMovementType, double x, double y, double z, boolean xFirst, boolean nocollide)
+  public static void onEntityMove(int id, boolean isSelfMovementType, double x, double y, double z, double mx, double my, double mz, boolean xFirst, boolean nocollide)
   {
     EntityType<?> type = types.get(id);
     if(type == null)
@@ -62,10 +72,12 @@ public class EntityPositionHelper
       if(Configs.Lists.ENTITY_TICKS.shouldRender(type))
         RenderHandler.addCuboid(x, y, z, type.getWidth()/2, type.getHeight(), Configs.Renderers.ENTITY_TICKS.config.color1(), Configs.Renderers.ENTITY_TICKS.config.color2(), Configs.Renderers.ENTITY_TICKS.config.dur());
 
-    if(Configs.Renderers.ENTITY_TRAJECTORY.config.on())
+    Vec3 pos = prevPos.get(id);
+    if(pos != null)
     {
-      Vec3 pos = prevPos.get(id);
-      if(pos != null && Configs.Lists.ENTITY_TRAJECTORY.shouldRender(type))
+      velocity(type, pos.x, pos.y, pos.z, mx, my, mz);
+
+      if(Configs.Renderers.ENTITY_TRAJECTORY.config.on() && Configs.Lists.ENTITY_TRAJECTORY.shouldRender(type))
       {
         Color4f stroke = isSelfMovementType ? Configs.Renderers.ENTITY_TRAJECTORY.config.color1() : Configs.Renderers.ENTITY_TRAJECTORY.config.color2();
         if(nocollide)

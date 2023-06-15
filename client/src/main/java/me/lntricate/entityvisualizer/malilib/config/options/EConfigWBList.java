@@ -24,6 +24,13 @@ public class EConfigWBList extends EConfigMulti
     ));
   }
 
+  @Override
+  public void onValueChanged()
+  {
+    super.onValueChanged();
+    remakeWidgets();
+  }
+
   public boolean test(String string)
   {
     return (ListType)getConfig(0).getValue() == ListType.WHITELIST ?

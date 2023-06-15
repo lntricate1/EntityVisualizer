@@ -69,7 +69,6 @@ public class Configs implements IConfigHandler
   public static class Generic
   {
     public static final EConfigHotkey OPEN_CONFIG_GUI = new EConfigHotkey("openConfigGui", "V,C", "A hotkey to open the in-game Config GUI");
-    public static final EConfigInteger MAX_RENDERS = new EConfigInteger("maxRenders", -1, -1, Integer.MAX_VALUE, "Maximum number of renderers allowed to render at once (set to -1 for no limit)");
     public static final EConfigDouble EXPLOSION_BOX_SIZE = new EConfigDouble("explosionBoxSize", 0.25, "Size of the explosion boxes");
 
     public static ImmutableList<IConfigBase> getOptions()
@@ -85,7 +84,6 @@ public class Configs implements IConfigHandler
     public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of
     (
       OPEN_CONFIG_GUI,
-      MAX_RENDERS,
       EXPLOSION_BOX_SIZE
     );
 
@@ -106,11 +104,13 @@ public class Configs implements IConfigHandler
 
     ENTITY_CREATION  ("entityCreation",   "#4400FF00",                          "#00000000",                          "Shows boxes at entity spawn locations", "Entity Creation"),
     ENTITY_TICKS     ("entityTicks",      "#440000FF",                          "#00000000",                          "Shows boxes at entity tick locations",  "Entity Ticks"),
+    ENTITY_VELOCITY  ("entityVelocity",   "#FFFF0000",                                                                "Shows lines for entity velocity",       "Entity Velocity"),
     ENTITY_TRAJECTORY("entityTrajectory", "#FF8800FF", "Normal movement color", "#FFFFFF00", "Piston movement color", "Shows lines for entity movement",       "Entity Trajectory"),
-    ENTITY_DEATHS    ("entityDeaths",     "#FFFF0000",                          "#00000000",                          "Shows boxes at entity death locations", "Entity Death");
+    ENTITY_DEATHS    ("entityDeaths",     "#44FF0000",                          "#00000000",                          "Shows boxes at entity death locations", "Entity Death");
 
     private static ImmutableList<EConfigBoolean> entityPacketRequirers = ImmutableList.of(
       ENTITY_TICKS.config.booleanConfig(),
+      ENTITY_VELOCITY.config.booleanConfig(),
       ENTITY_TRAJECTORY.config.booleanConfig(),
       ENTITY_DEATHS.config.booleanConfig()
     );
@@ -171,6 +171,7 @@ public class Configs implements IConfigHandler
 
     ENTITY_CREATION("entityCreation", ListContext.ENTITIES, "Entity Creation"),
     ENTITY_TICKS("entityTicks", ListContext.ENTITIES, "Entity Ticks"),
+    ENTITY_VELOCITY("entityVelocity", ListContext.ENTITIES, "Entity Velocity"),
     ENTITY_TRAJECTORY("entityTrajectory", ListContext.ENTITIES, "Entity Trajectory"),
     ENTITY_DEATHS("entityDeaths", ListContext.ENTITIES, "Entity Deaths");
 
@@ -186,10 +187,10 @@ public class Configs implements IConfigHandler
       switch(context)
       {
         case BLOCKS:
-          instantiate(name, ListType.BLACKLIST, ImmutableList.of(), ImmutableList.of("air"), prettyName);
+          instantiate(name, ListType.NONE, ImmutableList.of(), ImmutableList.of("air"), prettyName);
           break;
         case ENTITIES:
-          instantiate(name, ListType.BLACKLIST, ImmutableList.of(), ImmutableList.of("player"), prettyName);
+          instantiate(name, ListType.NONE, ImmutableList.of(), ImmutableList.of("player"), prettyName);
           break;
       }
     }

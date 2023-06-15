@@ -103,20 +103,12 @@ public class RenderHandler implements IRenderer, IClientTickHandler
       cuboid.removeStatic();
   }
 
-  // private static void onAddShape()
-  // {
-  //   int max = Configs.Generic.MAX_RENDERS.getIntegerValue();
-  //   if(max != -1 && shapes.size() > max)
-  //     shapes.remove(0);
-  // }
-
   public static void addLine(double x, double y, double z, double X, double Y, double Z, Color4f color, int ticks)
   {
     if(ticks == -1)
       lines.put(new Vec3(x, y, z), new Line(x, y, z, X, Y, Z, color).isStatic());
     else
       lines.put(new Vec3(x, y, z), new Line(x, y, z, X, Y, Z, color).ticks(ticks));
-    // onAddShape();
   }
 
   public static void addTrajectory(double x, double y, double z, double X, double Y, double Z, boolean xFirst, Color4f color, int ticks)
@@ -125,7 +117,6 @@ public class RenderHandler implements IRenderer, IClientTickHandler
       trajectories.put(new Vec3(x, y, z), new Trajectory(x, y, z, X, Y, Z, xFirst, color).isStatic());
     else
       trajectories.put(new Vec3(x, y, z), new Trajectory(x, y, z, X, Y, Z, xFirst, color).ticks(ticks));
-    // onAddShape();
   }
 
   public static void addCuboid(BlockPos pos, Color4f fill, Color4f stroke, int ticks)
@@ -154,7 +145,6 @@ public class RenderHandler implements IRenderer, IClientTickHandler
       cuboids.put(new Vec3(x, y, z), new Cuboid(x, y, z, X, Y, Z, stroke, fill).isStatic());
     else
       cuboids.put(new Vec3(x, y, z), new Cuboid(x, y, z, X, Y, Z, stroke, fill).ticks(ticks));
-    // onAddShape();
   }
 
   private static abstract class Shape

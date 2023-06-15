@@ -36,7 +36,7 @@ public class ServerNetworkHandler
     player.connection.send(new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(NetworkStuff.HI)));
   }
 
-  public static void sendEntity(ServerLevel level, int id, Vec3 pos, boolean self, boolean xFirst, boolean coll)
+  public static void sendEntity(ServerLevel level, int id, Vec3 pos, Vec3 vel, boolean self, boolean xFirst, boolean coll)
   {
     if(players.isEmpty())
       return;
@@ -56,6 +56,9 @@ public class ServerNetworkHandler
     tag.putDouble("x", pos.x);
     tag.putDouble("y", pos.y);
     tag.putDouble("z", pos.z);
+    tag.putDouble("mx", vel.x);
+    tag.putDouble("my", vel.y);
+    tag.putDouble("mz", vel.z);
     tag.putBoolean("self", self);
     tag.putBoolean("xFirst", xFirst);
     tag.putBoolean("coll", coll);

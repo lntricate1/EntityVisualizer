@@ -131,6 +131,10 @@ public class EConfigMulti extends ConfigBase<EConfigMulti> implements IEConfigWi
     super.onValueChanged();
     if(resetButton != null)
       resetButton.setEnabled(isModified());
+  }
+
+  public void remakeWidgets()
+  {
     if(widgetConfigOption != null)
       widgetConfigOption.remakeWidgets();
   }

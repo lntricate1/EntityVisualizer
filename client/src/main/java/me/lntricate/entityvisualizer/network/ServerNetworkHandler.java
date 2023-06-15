@@ -36,6 +36,11 @@ public class ServerNetworkHandler
     player.connection.send(new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(NetworkStuff.HI)));
   }
 
+  public static void onPlayerLeave(ServerPlayer player)
+  {
+    players.remove(player);
+  }
+
   public static void sendEntity(ServerLevel level, int id, Vec3 pos, Vec3 vel, boolean self, boolean xFirst, boolean coll)
   {
     if(players.isEmpty())

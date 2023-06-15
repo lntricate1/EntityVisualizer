@@ -18,4 +18,10 @@ public class PlayerListMixin
   {
     ServerNetworkHandler.onPlayerJoin(player);
   }
+
+  @Inject(method = "remove", at = @At("RETURN"))
+  private void onPlayerDisconnected(ServerPlayer player, CallbackInfo ci)
+  {
+    ServerNetworkHandler.onPlayerLeave(player);
+  }
 }

@@ -35,7 +35,7 @@ public class EntityPositionHelper
   private static void creation(EntityType<?> type, double x, double y, double z)
   {
     if(Configs.Renderers.ENTITY_CREATION.config.on() && Configs.Lists.ENTITY_CREATION.shouldRender(type))
-        RenderHandler.addCuboid(x, y, z, type.getWidth(), type.getHeight(), Configs.Renderers.ENTITY_CREATION.config.color1(), Configs.Renderers.ENTITY_CREATION.config.color2(), Configs.Renderers.ENTITY_CREATION.config.dur());
+        RenderHandler.addCuboid(x, y, z, type.getWidth()/2, type.getHeight(), Configs.Renderers.ENTITY_CREATION.config.color1(), Configs.Renderers.ENTITY_CREATION.config.color2(), Configs.Renderers.ENTITY_CREATION.config.dur());
   }
 
   private static void velocity(EntityType<?> type, double x, double y, double z, double mx, double my, double mz)

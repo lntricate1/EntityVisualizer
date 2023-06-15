@@ -26,6 +26,7 @@ public class AbstractArrowMixin
   @Inject(method = "tick", at = @At("TAIL"))
   private void onTickTail(CallbackInfo ci)
   {
-    ServerNetworkHandler.sendEntity((ServerLevel)((Entity)(Object)this).level, ((Entity)(Object)this).getId(), ((Entity)(Object)this).position(), vel, true, true, true);
+    if(!((Entity)(Object)this).level.isClientSide())
+      ServerNetworkHandler.sendEntity((ServerLevel)((Entity)(Object)this).level, ((Entity)(Object)this).getId(), ((Entity)(Object)this).position(), vel, true, true, true);
   }
 }

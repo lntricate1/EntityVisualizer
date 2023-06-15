@@ -36,8 +36,21 @@ public class ServerNetworkHandler
     player.connection.send(new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(NetworkStuff.HI)));
   }
 
-  public static void sendEntity(ServerLevel level, int id, Vec3 pos, boolean self, boolean xFirst)
+  public static void sendEntity(ServerLevel level, int id, Vec3 pos, boolean self, boolean xFirst, boolean coll)
   {
+    if(players.isEmpty())
+      return;
+
+    boolean shouldExit = true;
+    for(ServerPlayer player : players)
+      if(player.level == level && player.position().distanceToSqr(pos) < 16384)
+      {
+        shouldExit = false;
+        break;
+      }
+    if(shouldExit)
+      return;
+
     CompoundTag tag = new CompoundTag();
     tag.putInt("id", id);
     tag.putDouble("x", pos.x);
@@ -45,13 +58,15 @@ public class ServerNetworkHandler
     tag.putDouble("z", pos.z);
     tag.putBoolean("self", self);
     tag.putBoolean("xFirst", xFirst);
+    tag.putBoolean("coll", coll);
 
     FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
     packetBuf.writeVarInt(NetworkStuff.DATA);
     packetBuf.writeNbt(tag);
+    ClientboundCustomPayloadPacket packet = new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, packetBuf);
 
     for(ServerPlayer player : players)
       if(player.level == level && player.position().distanceToSqr(pos) < 16384)
-        player.connection.send(new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, packetBuf));
+        player.connection.send(packet);
   }
 }

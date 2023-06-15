@@ -12,13 +12,13 @@
     "sources": "https://github.com/lntricate1/EntityVisualizer"
   },
 
-  "icon": "assets/entityvisualizerserver/icon.png",
+  "icon": "assets/entityvisualizer/icon.png",
 
   "environment": "*",
   "entrypoints": {
   },
   "mixins": [
-    "entityvisualizerserver.mixins.json"
+    "entityvisualizer.mixins.json"
   ],
 
   "depends": {

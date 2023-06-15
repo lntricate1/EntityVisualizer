@@ -1,9 +1,9 @@
 package me.lntricate.entityvisualizer.event;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -18,7 +18,7 @@ import fi.dy.masa.malilib.interfaces.IClientTickHandler;
 import fi.dy.masa.malilib.interfaces.IRenderer;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.Color4f;
-import me.lntricate.entityvisualizer.config.Configs;
+// import me.lntricate.entityvisualizer.config.Configs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.BlockPos;
@@ -28,7 +28,9 @@ import net.minecraft.world.phys.Vec3;
 public class RenderHandler implements IRenderer, IClientTickHandler
 {
   private static RenderHandler INSTANCE = new RenderHandler();
-  private static List<Shape> shapes = new ArrayList<>();
+  private static Map<Vec3, Shape> lines = new HashMap<>();
+  private static Map<Vec3, Shape> trajectories = new HashMap<>();
+  private static Map<Vec3, Shape> cuboids = new HashMap<>();
 
   public static RenderHandler getInstance()
   {
@@ -47,57 +49,83 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     RenderSystem.disableDepthTest();
 
     // INEFFICIENT but i don't know how else to avoid concurrent access to shapes
-    List<Shape> shapesCopy = List.copyOf(shapes);
-    for(Shape shape : shapesCopy)
-    {
-      shape.render(cx, cy, cz);
-    }
+    // List<Shape> shapesCopy = List.copyOf(shapes);
+    // for(Shape shape : shapesCopy)
+      // shape.render(cx, cy, cz);
+    for(Shape line : lines.values())
+      line.render(cx, cy, cz);
+    for(Shape trajectory : trajectories.values())
+      trajectory.render(cx, cy, cz);
+    for(Shape cuboid : cuboids.values())
+      cuboid.render(cx, cy, cz);
   }
 
   @Override
   public void onClientTick(Minecraft minecraft)
   {
     long time = System.currentTimeMillis();
-    Iterator<Shape> iter = shapes.iterator();
-    while(iter.hasNext())
+    Iterator<Shape> ilines = lines.values().iterator();
+    while(ilines.hasNext())
     {
-      Shape shape = iter.next();
-      if(shape.removed)
-        iter.remove();
+      Shape line = ilines.next();
+      if(line.removed)
+        ilines.remove();
       else
-        shape.tick(time);
+        line.tick(time);
+    }
+    Iterator<Shape> itrajectories = trajectories.values().iterator();
+    while(itrajectories.hasNext())
+    {
+      Shape trajectory = itrajectories.next();
+      if(trajectory.removed)
+        itrajectories.remove();
+      else
+        trajectory.tick(time);
+    }
+    Iterator<Shape> icuboids = cuboids.values().iterator();
+    while(icuboids.hasNext())
+    {
+      Shape cuboid = icuboids.next();
+      if(cuboid.removed)
+        icuboids.remove();
+      else
+        cuboid.tick(time);
     }
   }
 
   public static void removeStaticShapes()
   {
-    for(Shape shape : shapes)
-      shape.removeStatic();
+    for(Shape line : lines.values())
+      line.removeStatic();
+    for(Shape trajectory : trajectories.values())
+      trajectory.removeStatic();
+    for(Shape cuboid : cuboids.values())
+      cuboid.removeStatic();
   }
 
-  private static void onAddShape()
-  {
-    int max = Configs.Generic.MAX_RENDERS.getIntegerValue();
-    if(max != -1 && shapes.size() > max)
-      shapes.remove(0);
-  }
+  // private static void onAddShape()
+  // {
+  //   int max = Configs.Generic.MAX_RENDERS.getIntegerValue();
+  //   if(max != -1 && shapes.size() > max)
+  //     shapes.remove(0);
+  // }
 
   public static void addLine(double x, double y, double z, double X, double Y, double Z, Color4f color, int ticks)
   {
     if(ticks == -1)
-      shapes.add(new Line(x, y, z, X, Y, Z, color).isStatic());
+      lines.put(new Vec3(x, y, z), new Line(x, y, z, X, Y, Z, color).isStatic());
     else
-      shapes.add(new Line(x, y, z, X, Y, Z, color).ticks(ticks));
-    onAddShape();
+      lines.put(new Vec3(x, y, z), new Line(x, y, z, X, Y, Z, color).ticks(ticks));
+    // onAddShape();
   }
 
   public static void addTrajectory(double x, double y, double z, double X, double Y, double Z, boolean xFirst, Color4f color, int ticks)
   {
     if(ticks == -1)
-      shapes.add(new Trajectory(x, y, z, X, Y, Z, xFirst, color).isStatic());
+      trajectories.put(new Vec3(x, y, z), new Trajectory(x, y, z, X, Y, Z, xFirst, color).isStatic());
     else
-      shapes.add(new Trajectory(x, y, z, X, Y, Z, xFirst, color).ticks(ticks));
-    onAddShape();
+      trajectories.put(new Vec3(x, y, z), new Trajectory(x, y, z, X, Y, Z, xFirst, color).ticks(ticks));
+    // onAddShape();
   }
 
   public static void addCuboid(BlockPos pos, Color4f fill, Color4f stroke, int ticks)
@@ -123,10 +151,10 @@ public class RenderHandler implements IRenderer, IClientTickHandler
   public static void addCuboid(double x, double y, double z, double X, double Y, double Z, Color4f fill, Color4f stroke, int ticks)
   {
     if(ticks == -1)
-      shapes.add(new Cuboid(x, y, z, X, Y, Z, stroke, fill).isStatic());
+      cuboids.put(new Vec3(x, y, z), new Cuboid(x, y, z, X, Y, Z, stroke, fill).isStatic());
     else
-      shapes.add(new Cuboid(x, y, z, X, Y, Z, stroke, fill).ticks(ticks));
-    onAddShape();
+      cuboids.put(new Vec3(x, y, z), new Cuboid(x, y, z, X, Y, Z, stroke, fill).ticks(ticks));
+    // onAddShape();
   }
 
   private static abstract class Shape

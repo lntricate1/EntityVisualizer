@@ -24,12 +24,12 @@
 		<link>
 			<name>java</name>
 			<type>2</type>
-			<location>/home/intricate/16mods/EntityVisualizer/client/src/main/java</location>
+			<location>/home/intricate/dev/EntityVisualizer/client/src/main/java</location>
 		</link>
 		<link>
 			<name>resources</name>
 			<type>2</type>
-			<location>/home/intricate/16mods/EntityVisualizer/client/src/main/resources</location>
+			<location>/home/intricate/dev/EntityVisualizer/client/src/main/resources</location>
 		</link>
 	</linkedResources>
 	<filteredResources>

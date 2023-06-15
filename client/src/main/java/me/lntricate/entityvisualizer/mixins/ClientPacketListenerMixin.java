@@ -71,8 +71,8 @@ public class ClientPacketListenerMixin
           {
             Vec3 pos = ray.getLeft();
             RenderHandler.addLine(
-              x, y, z,
               pos.x(), pos.y(), pos.z(),
+              x, y, z,
               ray.getRight() ? Renderers.EXPLOSION_ENTITY_RAYS.config.color1() : Renderers.EXPLOSION_ENTITY_RAYS.config.color2(),
               Renderers.EXPLOSION_ENTITY_RAYS.config.dur());
           }
@@ -80,7 +80,7 @@ public class ClientPacketListenerMixin
 
     if(Renderers.EXPLOSION_BLOCK_RAYS.config.on())
       for(Vec3 ray : ExplosionHelper.getBlockRays(x, y, z, power))
-        RenderHandler.addLine(x, y, z, ray.x, ray.y, ray.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color1(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
+        RenderHandler.addLine(ray.x, ray.y, ray.z, x, y, z, Renderers.EXPLOSION_BLOCK_RAYS.config.color1(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
 
     if(Renderers.EXPLOSION_MIN_BLOCKS.config.on())
       for(Pair<BlockPos, BlockState> pair : ExplosionHelper.getAffectedBlocks(x, y, z, power, level, 0F))

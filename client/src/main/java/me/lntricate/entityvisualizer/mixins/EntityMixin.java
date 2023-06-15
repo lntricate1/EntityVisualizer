@@ -19,11 +19,12 @@ public class EntityMixin
   @Shadow private Vec3 position;
   @Shadow private Level level;
   @Shadow private int id;
+  @Shadow private boolean noPhysics;
 
   @Inject(method = "move", at = @At("TAIL"))
   private void endMove(MoverType moverType, Vec3 movement, CallbackInfo ci)
   {
     if(!level.isClientSide())
-      ServerNetworkHandler.sendEntity((ServerLevel)level, id, position, moverType == MoverType.SELF || moverType == MoverType.PLAYER, movement.x >= movement.z);
+      ServerNetworkHandler.sendEntity((ServerLevel)level, id, position, moverType == MoverType.SELF || moverType == MoverType.PLAYER, movement.x >= movement.z, noPhysics);
   }
 }

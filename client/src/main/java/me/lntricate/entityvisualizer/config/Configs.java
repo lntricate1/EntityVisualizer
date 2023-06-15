@@ -97,17 +97,17 @@ public class Configs implements IConfigHandler
 
   public enum Renderers
   {
-    EXPLOSIONS               ("explosions",              "#4400FFFF",                  "#FF000000",                      "Shows boxes at explosions",                                 "Explosions"),
+    EXPLOSIONS               ("explosions",              "#FF00FFFF",                  "#00000000",                      "Shows boxes at explosions",                                 "Explosions"),
     EXPLOSION_ENTITY_RAYS    ("explosionEntityRays",     "#FF00FF00", "Ray hit color", "#FFFF0000", "Ray blocked color", "Shows raycasts used in entity exposure calculation",        "Explosion Entity Rays"),
     EXPLOSION_BLOCK_RAYS     ("explosionBlockRays",      "#FFFF0000",                                                    "Shows \"rays\" used in block breaking calculation",         "Explosion Block Rays"),
-    EXPLOSION_MIN_BLOCKS     ("explosionMinBlocks",      "#44FF0000",                  "#FF000000",                      "Shows the blocks ALWAYS destroyed by an explosion",         "Explosion Minimum Blocks"),
-    EXPLOSION_MAX_BLOCKS     ("explosionMaxBlocks",      "#44FFFF00",                  "#FF000000",                      "Shows the blocks POSSIBLY destroyed by an explosion", "Explosion Maximum Blocks"),
-    EXPLOSION_AFFECTED_BLOCKS("explosionAffectedBlocks", "#44FF8800",                  "#FF000000",                      "Shows the blocks ACTUALLY destroyed by an explosion",       "Explosion Affected Blocks"),
+    EXPLOSION_MIN_BLOCKS     ("explosionMinBlocks",      "#44FF0000",                  "#00000000",                      "Shows the blocks ALWAYS destroyed by an explosion",         "Explosion Minimum Blocks"),
+    EXPLOSION_MAX_BLOCKS     ("explosionMaxBlocks",      "#44FFFF00",                  "#00000000",                      "Shows the blocks POSSIBLY destroyed by an explosion", "Explosion Maximum Blocks"),
+    EXPLOSION_AFFECTED_BLOCKS("explosionAffectedBlocks", "#44FF8800",                  "#00000000",                      "Shows the blocks ACTUALLY destroyed by an explosion",       "Explosion Affected Blocks"),
 
-    ENTITY_CREATION  ("entityCreation",   "#4400FF00",                          "#FF000000",                          "Shows boxes at entity spawn locations", "Entity Creation"),
-    ENTITY_TICKS     ("entityTicks",      "#440000FF",                          "#FF000000",                          "Shows boxes at entity tick locations",  "Entity Ticks"),
+    ENTITY_CREATION  ("entityCreation",   "#4400FF00",                          "#00000000",                          "Shows boxes at entity spawn locations", "Entity Creation"),
+    ENTITY_TICKS     ("entityTicks",      "#440000FF",                          "#00000000",                          "Shows boxes at entity tick locations",  "Entity Ticks"),
     ENTITY_TRAJECTORY("entityTrajectory", "#FF8800FF", "Normal movement color", "#FFFFFF00", "Piston movement color", "Shows lines for entity movement",       "Entity Trajectory"),
-    ENTITY_DEATHS    ("entityDeaths",     "#44FF0000",                          "#FF000000",                          "Shows boxes at entity death locations", "Entity Death");
+    ENTITY_DEATHS    ("entityDeaths",     "#FFFF0000",                          "#00000000",                          "Shows boxes at entity death locations", "Entity Death");
 
     private static ImmutableList<EConfigBoolean> entityPacketRequirers = ImmutableList.of(
       ENTITY_TICKS.config.booleanConfig(),

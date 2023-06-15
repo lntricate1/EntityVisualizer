@@ -1,0 +1,38 @@
+{
+  "mappings": {
+    "me/lntricate/entityvisualizerserver/mixins/AbstractArrowMixin": {
+      "tick": "Lnet/minecraft/class_1665;method_5773()V"
+    },
+    "me/lntricate/entityvisualizerserver/mixins/EntityMixin": {
+      "move": "Lnet/minecraft/class_1297;method_5784(Lnet/minecraft/class_1313;Lnet/minecraft/class_243;)V"
+    },
+    "me/lntricate/entityvisualizerserver/mixins/PlayerListMixin": {
+      "placeNewPlayer": "Lnet/minecraft/class_3324;method_14570(Lnet/minecraft/class_2535;Lnet/minecraft/class_3222;)V"
+    },
+    "me/lntricate/entityvisualizerserver/mixins/ServerGamePacketListenerImplMixin": {
+      "handleCustomPayload": "Lnet/minecraft/class_3244;method_12075(Lnet/minecraft/class_2817;)V"
+    },
+    "me/lntricate/entityvisualizerserver/mixins/ThrowableProjectileMixin": {
+      "tick": "Lnet/minecraft/class_1682;method_5773()V"
+    }
+  },
+  "data": {
+    "named:intermediary": {
+      "me/lntricate/entityvisualizerserver/mixins/AbstractArrowMixin": {
+        "tick": "Lnet/minecraft/class_1665;method_5773()V"
+      },
+      "me/lntricate/entityvisualizerserver/mixins/EntityMixin": {
+        "move": "Lnet/minecraft/class_1297;method_5784(Lnet/minecraft/class_1313;Lnet/minecraft/class_243;)V"
+      },
+      "me/lntricate/entityvisualizerserver/mixins/PlayerListMixin": {
+        "placeNewPlayer": "Lnet/minecraft/class_3324;method_14570(Lnet/minecraft/class_2535;Lnet/minecraft/class_3222;)V"
+      },
+      "me/lntricate/entityvisualizerserver/mixins/ServerGamePacketListenerImplMixin": {
+        "handleCustomPayload": "Lnet/minecraft/class_3244;method_12075(Lnet/minecraft/class_2817;)V"
+      },
+      "me/lntricate/entityvisualizerserver/mixins/ThrowableProjectileMixin": {
+        "tick": "Lnet/minecraft/class_1682;method_5773()V"
+      }
+    }
+  }
+}

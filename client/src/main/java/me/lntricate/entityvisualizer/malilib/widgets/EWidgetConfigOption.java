@@ -1,12 +1,17 @@
 package me.lntricate.entityvisualizer.malilib.widgets;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import fi.dy.masa.malilib.config.IConfigBase;
-import fi.dy.masa.malilib.config.IConfigNotifiable;
 import fi.dy.masa.malilib.config.IConfigResettable;
 import fi.dy.masa.malilib.config.IConfigValue;
 import fi.dy.masa.malilib.config.IStringRepresentable;
@@ -23,6 +28,8 @@ import fi.dy.masa.malilib.gui.widgets.WidgetConfigOptionBase;
 import fi.dy.masa.malilib.gui.widgets.WidgetHoverInfo;
 import fi.dy.masa.malilib.gui.widgets.WidgetListConfigOptionsBase;
 import fi.dy.masa.malilib.gui.wrappers.TextFieldWrapper;
+import fi.dy.masa.malilib.hotkeys.IHotkey;
+import fi.dy.masa.malilib.hotkeys.KeybindSettings;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.KeyCodes;
 import fi.dy.masa.malilib.util.StringUtils;
@@ -35,6 +42,8 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
   private int x, y;
   private final int labelWidth, w, h;
   private List<TextFieldWrapper<? extends GuiTextFieldGeneric>> textFields = new ArrayList<>();
+  @Nullable protected final Set<Pair<KeybindSettings, IHotkey>> initialKeybindSettings = new HashSet<>();
+  private boolean modified;
 
   public EWidgetConfigOption(int x, int y, int width, int height, int labelWidth, int configWidth, ConfigOptionWrapper wrapper, int listIndex, IKeybindConfigGui host, WidgetListConfigOptionsBase<?, ?> parent)
   {
@@ -82,7 +91,17 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
   @Override
   public boolean wasConfigModified()
   {
+    if(modified)
+    {
+      modified = false;
+      return true;
+    }
     return false;
+  }
+
+  public void modify()
+  {
+    modified = true;
   }
 
   public void addWidgetPublic(WidgetBase widget)
@@ -141,12 +160,7 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
       if(wrapper.isFocused())
       {
         boolean ret = wrapper.onKeyTyped(keyCode, scanCode, modifiers);
-        if(keyCode == KeyCodes.KEY_ENTER)
-        {
-          return true;
-        }
-        else
-          return ret;
+        return keyCode == KeyCodes.KEY_ENTER || ret;
       }
     return false;
   }

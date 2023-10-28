@@ -3,20 +3,21 @@ package me.lntricate.entityvisualizer.helpers;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import fi.dy.masa.malilib.util.Color4f;
 import me.lntricate.entityvisualizer.config.Configs;
 import me.lntricate.entityvisualizer.config.Configs.Renderers;
 import me.lntricate.entityvisualizer.event.RenderHandler;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
@@ -25,6 +26,22 @@ import net.minecraft.world.phys.Vec3;
 
 public class ExplosionHelper
 {
+  private static final Set<Vec3> RAYS = new HashSet<>();
+  static
+  {
+    for(int i = 0; i < 16; ++i)
+      for(int j = 0; j < 16; ++j)
+        for(int k = 0; k < 16; ++k)
+          if(i==0 || i==15 || j==0 || j==15 || k==0 || k==15)
+          {
+            double dx = (float)i / 15F * 2F - 1F;
+            double dy = (float)j / 15F * 2F - 1F;
+            double dz = (float)k / 15F * 2F - 1F;
+            double mag = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            RAYS.add(new Vec3(dx / mag * 0.3f, dy / mag * 0.3f, dz / mag * 0.3f));
+          }
+  }
+
   public static List<Pair<Vec3, Boolean>> getExposurePoints(double sx, double sy, double sz, float power, Entity entity)
   {
     ArrayList<Pair<Vec3, Boolean>> points = new ArrayList<>();
@@ -51,67 +68,76 @@ public class ExplosionHelper
     return points;
   }
 
-  public static Set<Pair<BlockPos, BlockState>> getAffectedBlocks(double sx, double sy, double sz, float power, Level level, float random/* , float blastRes */)
+  public static Set<Pair<BlockPos, BlockState>> getAffectedBlocks(double sx, double sy, double sz, float power, ClientLevel level, float random)
   {
     Set<Pair<BlockPos, BlockState>> positions = new HashSet<>();
-    for(int i = 0; i < 16; ++i)
-      for(int j = 0; j < 16; ++j)
-        for(int k = 0; k < 16; ++k)
-          if(i==0 || i==15 || j==0 || j==15 || k==0 || k==15)
+    for(Vec3 ray : RAYS)
     {
-      double dx = (float)i / 15F * 2F - 1F;
-      double dy = (float)j / 15F * 2F - 1F;
-      double dz = (float)k / 15F * 2F - 1F;
-      double mag = Math.sqrt(dx*dx + dy*dy + dz*dz);
-      dx = dx / mag * 0.3F;
-      dy = dy / mag * 0.3F;
-      dz = dz / mag * 0.3F;
-      double x = sx;
-      double y = sy;
-      double z = sz;
-      for(float h = power * (0.7F + random * 0.6F); h > 0F; h -= 0.22500001F)
+      Vec3 pos = new Vec3(sx, sy, sz);
+      for(float rayStrength = power * (0.7F + random * 0.6F); rayStrength > 0F; rayStrength -= 0.22500001F, pos = pos.add(ray))
       {
-        BlockPos blockPos = new BlockPos(x, y, z);
-        if(!level.isInWorldBounds(blockPos)) break;
+        BlockPos blockPos = new BlockPos(pos);
+        if(!level.isInWorldBounds(blockPos))
+          break;
+
         BlockState blockState = level.getBlockState(blockPos);
         FluidState fluidState = level.getFluidState(blockPos);
-        Optional<Float> optional = blockState.isAir() && fluidState.isEmpty() ? Optional.empty() : Optional.of(Math.max(blockState.getBlock().getExplosionResistance(), fluidState.getExplosionResistance()));
-        if(optional.isPresent())
+        if(!blockState.isAir() || !fluidState.isEmpty())
         {
-          h -= (optional.get() + 0.3F) * 0.3F;
+          float blastRes = Math.max(blockState.getBlock().getExplosionResistance(), fluidState.getExplosionResistance());
+          rayStrength -= (blastRes + 0.3F) * 0.3F;
         }
-        if(h > 0)
+
+        if(rayStrength > 0)
           positions.add(Pair.of(blockPos, blockState));
-        x += dx;
-        y += dy;
-        z += dz;
       }
     }
     return positions;
   }
 
-  public static Set<Vec3> getBlockRays(double sx, double sy, double sz, float power)
+  public static Pair<Set<Vec3>, Set<Vec3>> getBlockPoints(double sx, double sy, double sz, float power, ClientLevel level)
   {
-    Set<Vec3> positions = new HashSet<>();
-    for(int i = 0; i < 16; ++i)
-      for(int j = 0; j < 16; ++j)
-        for(int k = 0; k < 16; ++k)
-          if(i==0 || i==15 || j==0 || j==15 || k==0 || k==15)
+    Set<Vec3> outMin = new HashSet<>();
+    Set<Vec3> outMax = new HashSet<>();
+    Vec3 startPos = new Vec3(sx, sy, sz);
+    for(Vec3 ray : RAYS)
     {
-      double dx = (float)i / 15F * 2F - 1F;
-      double dy = (float)j / 15F * 2F - 1F;
-      double dz = (float)k / 15F * 2F - 1F;
-      double mag = Math.sqrt(dx*dx + dy*dy + dz*dz);
-      int length = (int)Math.ceil(power * (0.7F + 0.6F) / 0.22500001F);
-      positions.add(new Vec3(sx + dx / mag * 0.3F * length, sy + dy / mag * 0.3F * length, sz + dz / mag * 0.3F * length));
+      Vec3 rayPos = startPos.add(ray);
+      float rayStrengthMin = power * 0.7F;
+      float rayStrengthMax = power * 1.3F;
+      for(; rayStrengthMax > 0F; rayStrengthMin -= 0.22500001F, rayStrengthMax -= 0.22500001F, rayPos = rayPos.add(ray))
+      {
+        BlockPos pos = new BlockPos(rayPos);
+        if(!level.isInWorldBounds(pos))
+          break;
+        BlockState blockState = level.getBlockState(pos);
+        FluidState fluidState = level.getFluidState(pos);
+        Block block = blockState.getBlock();
+        if(!blockState.isAir() || !fluidState.isEmpty())
+        {
+          float blastRes = (Math.max(block.getExplosionResistance(), fluidState.getExplosionResistance()) + 0.3F) * 0.3F;
+          rayStrengthMin -= blastRes;
+          rayStrengthMax -= blastRes;
+        }
+        if(!Configs.Lists.EXPLOSION_BLOCK_RAYS.shouldRender(block))
+          continue;
+
+        if(rayStrengthMin > 0F)
+          outMin.add(rayPos);
+        else if(rayStrengthMax > 0F)
+          outMax.add(rayPos);
+      }
     }
-    return positions;
+    return Pair.of(outMin, outMax);
   }
 
   public static void explosion(double x, double y, double z)
   {
     if(Renderers.EXPLOSIONS.config.on())
+    {
       RenderHandler.addCuboid(x, y, z, Configs.Generic.EXPLOSION_BOX_SIZE.getDoubleValue()/2, Renderers.EXPLOSIONS.config.color1(), Renderers.EXPLOSIONS.config.color2(), Renderers.EXPLOSIONS.config.dur());
+      RenderHandler.addText(x, y, z, Component.Serializer.fromJsonLenient("\"BALLS\""), new Color4f(0.5f, 0.5f, 0.5f, 0.5f), 100);
+    }
   }
 
   public static void explosionEntityRays(double x, double y, double z, ClientLevel level, float power)
@@ -135,11 +161,16 @@ public class ExplosionHelper
     }
   }
 
-  public static void explosionBlockRays(double x, double y, double z, float power)
+  public static void explosionBlockRays(double x, double y, double z, ClientLevel level, float power)
   {
     if(Renderers.EXPLOSION_BLOCK_RAYS.config.on())
-      for(Vec3 ray : getBlockRays(x, y, z, power))
-        RenderHandler.addLine(ray.x, ray.y, ray.z, x, y, z, Renderers.EXPLOSION_BLOCK_RAYS.config.color1(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
+    {
+      Pair<Set<Vec3>, Set<Vec3>> points = getBlockPoints(x, y, z, power, level);
+      for(Vec3 min : points.getLeft())
+        RenderHandler.addPoint(min.x, min.y, min.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color1(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
+      for(Vec3 max : points.getRight())
+        RenderHandler.addPoint(max.x, max.y, max.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color2(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
+    }
   }
 
   public static void explosionMinBlocks(double x, double y, double z, ClientLevel level, float power)

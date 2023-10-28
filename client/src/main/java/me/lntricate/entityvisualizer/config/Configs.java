@@ -18,7 +18,6 @@ import me.lntricate.entityvisualizer.EntityVisualizerMod;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigBoolean;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigDouble;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigHotkey;
-import me.lntricate.entityvisualizer.malilib.config.options.EConfigInteger;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigRenderer;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigWBList;
 import me.lntricate.entityvisualizer.network.ClientNetworkHandler;
@@ -70,6 +69,7 @@ public class Configs implements IConfigHandler
   {
     public static final EConfigHotkey OPEN_CONFIG_GUI = new EConfigHotkey("openConfigGui", "V,C", "A hotkey to open the in-game Config GUI");
     public static final EConfigDouble EXPLOSION_BOX_SIZE = new EConfigDouble("explosionBoxSize", 0.25, "Size of the explosion boxes");
+    public static final EConfigDouble POINT_SIZE = new EConfigDouble("pointSize", 0.02, "Size of the points in the Block Rays renderer");
 
     public static ImmutableList<IConfigBase> getOptions()
     {
@@ -84,7 +84,8 @@ public class Configs implements IConfigHandler
     public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of
     (
       OPEN_CONFIG_GUI,
-      EXPLOSION_BOX_SIZE
+      EXPLOSION_BOX_SIZE,
+      POINT_SIZE
     );
 
     public static final ImmutableList<IHotkey> HOTKEYS = ImmutableList.of
@@ -97,7 +98,7 @@ public class Configs implements IConfigHandler
   {
     EXPLOSIONS               ("explosions",              "#FF00FFFF",                  "#00000000",                      "Shows boxes at explosions",                                 "Explosions"),
     EXPLOSION_ENTITY_RAYS    ("explosionEntityRays",     "#FF00FF00", "Ray hit color", "#FFFF0000", "Ray blocked color", "Shows raycasts used in entity exposure calculation",        "Explosion Entity Rays"),
-    EXPLOSION_BLOCK_RAYS     ("explosionBlockRays",      "#FFFF0000",                                                    "Shows \"rays\" used in block breaking calculation",         "Explosion Block Rays"),
+    EXPLOSION_BLOCK_RAYS     ("explosionBlockRays",      "#44FF0000",                  "#44FFFF00",                      "Shows \"rays\" used in block breaking calculation",         "Explosion Block Rays"),
     EXPLOSION_MIN_BLOCKS     ("explosionMinBlocks",      "#44FF0000",                  "#00000000",                      "Shows the blocks ALWAYS destroyed by an explosion",         "Explosion Minimum Blocks"),
     EXPLOSION_MAX_BLOCKS     ("explosionMaxBlocks",      "#44FFFF00",                  "#00000000",                      "Shows the blocks POSSIBLY destroyed by an explosion", "Explosion Maximum Blocks"),
     EXPLOSION_AFFECTED_BLOCKS("explosionAffectedBlocks", "#44FF8800",                  "#00000000",                      "Shows the blocks ACTUALLY destroyed by an explosion",       "Explosion Affected Blocks"),
@@ -165,6 +166,7 @@ public class Configs implements IConfigHandler
   public enum Lists
   {
     EXPLOSION_ENTITY_RAYS("explosionEntityRays", ListContext.ENTITIES, "Explosion Entity Rays"),
+    EXPLOSION_BLOCK_RAYS("explosionBlockRays", ListContext.BLOCKS, "Explosion Block Rays"),
     EXPLOSION_MIN_BLOCKS("explosionMinBlocks", ListContext.BLOCKS, "Explosion Min Rays"),
     EXPLOSION_MAX_BLOCKS("explosionMaxBlocks", ListContext.BLOCKS, "Explosion Max Rays"),
     EXPLOSION_AFFECTED_BLOCKS("explosionAffectedBlocks", ListContext.BLOCKS, "Explosion Affected Blocks"),

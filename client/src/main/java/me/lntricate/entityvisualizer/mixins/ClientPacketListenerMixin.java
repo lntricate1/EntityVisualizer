@@ -46,7 +46,7 @@ public class ClientPacketListenerMixin
     float power = packet.getPower();
 
     ExplosionHelper.explosion(x, y, z);
-    ExplosionHelper.explosionBlockRays(x, y, z, power);
+    ExplosionHelper.explosionBlockRays(x, y, z, level, power);
     ExplosionHelper.explosionEntityRays(x, y, z, level, power);
     ExplosionHelper.explosionMaxBlocks(x, y, z, level, power);
     ExplosionHelper.explosionMinBlocks(x, y, z, level, power);

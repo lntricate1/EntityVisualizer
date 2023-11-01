@@ -18,6 +18,7 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(ClientPacketListener.class)
 public class ClientPacketListenerMixin
@@ -44,13 +45,12 @@ public class ClientPacketListenerMixin
     double y = packet.getY();
     double z = packet.getZ();
     float power = packet.getPower();
+    Vec3 pos = new Vec3(x, y, z);
 
     ExplosionHelper.explosion(x, y, z);
-    ExplosionHelper.explosionBlockRays(x, y, z, level, power);
+    ExplosionHelper.explosionBlockRays(pos, level, power);
     ExplosionHelper.explosionEntityRays(x, y, z, level, power);
-    ExplosionHelper.explosionMaxBlocks(x, y, z, level, power);
-    ExplosionHelper.explosionMinBlocks(x, y, z, level, power);
-    ExplosionHelper.explosionAffectedBlocks(x, y, z, level, packet.getToBlow());
+    ExplosionHelper.explosionAffectedBlocks(pos, level, power);
   }
 
   @Inject(method = "handleAddEntity", at = @At("TAIL"))

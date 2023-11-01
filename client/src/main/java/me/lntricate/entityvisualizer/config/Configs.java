@@ -96,12 +96,14 @@ public class Configs implements IConfigHandler
 
   public enum Renderers
   {
-    EXPLOSIONS               ("explosions",              "#FF00FFFF",                  "#00000000",                      "Shows boxes at explosions",                                 "Explosions"),
-    EXPLOSION_ENTITY_RAYS    ("explosionEntityRays",     "#FF00FF00", "Ray hit color", "#FFFF0000", "Ray blocked color", "Shows raycasts used in entity exposure calculation",        "Explosion Entity Rays"),
-    EXPLOSION_BLOCK_RAYS     ("explosionBlockRays",      "#44FF0000",                  "#44FFFF00",                      "Shows \"rays\" used in block breaking calculation",         "Explosion Block Rays"),
-    EXPLOSION_MIN_BLOCKS     ("explosionMinBlocks",      "#44FF0000",                  "#00000000",                      "Shows the blocks ALWAYS destroyed by an explosion",         "Explosion Minimum Blocks"),
-    EXPLOSION_MAX_BLOCKS     ("explosionMaxBlocks",      "#44FFFF00",                  "#00000000",                      "Shows the blocks POSSIBLY destroyed by an explosion", "Explosion Maximum Blocks"),
-    EXPLOSION_AFFECTED_BLOCKS("explosionAffectedBlocks", "#44FF8800",                  "#00000000",                      "Shows the blocks ACTUALLY destroyed by an explosion",       "Explosion Affected Blocks"),
+    EXPLOSIONS               ("explosions",              "#FF00FFFF",                  "#00000000",
+      "Shows boxes at explosions", "Explosions"),
+    EXPLOSION_ENTITY_RAYS    ("explosionEntityRays",     "#FF00FF00", "Ray hit color", "#FFFF0000", "Ray blocked color",
+      "Shows raycasts used in entity exposure calculation", "Explosion Entity Rays"),
+    EXPLOSION_BLOCK_RAYS     ("explosionBlockRays",      "#FFFF0000", "Minimum color", "#FFFFFF00", "Maximum color",
+      "Shows minimum and maximum \"rays\" checked for block breaking", "Explosion Block Rays"),
+    EXPLOSION_AFFECTED_BLOCKS("explosionAffectedBlocks", "#44FF0000", "Minimum color", "#44FFFF00", "Maximum color",
+      "Shows the minimum and maximum blocks destroyed by an explosion", "Explosion Affected Blocks"),
 
     ENTITY_CREATION  ("entityCreation",   "#4400FF00",                          "#00000000",                          "Shows boxes at entity spawn locations", "Entity Creation"),
     ENTITY_TICKS     ("entityTicks",      "#440000FF",                          "#00000000",                          "Shows boxes at entity tick locations",  "Entity Ticks"),

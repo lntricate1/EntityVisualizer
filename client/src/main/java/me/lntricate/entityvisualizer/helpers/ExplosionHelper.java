@@ -7,13 +7,14 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.google.common.collect.ImmutableSet;
+
 import fi.dy.masa.malilib.util.Color4f;
 import me.lntricate.entityvisualizer.config.Configs;
 import me.lntricate.entityvisualizer.config.Configs.Renderers;
 import me.lntricate.entityvisualizer.event.RenderHandler;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
@@ -26,9 +27,10 @@ import net.minecraft.world.phys.Vec3;
 
 public class ExplosionHelper
 {
-  private static final Set<Vec3> RAYS = new HashSet<>();
+  private static final ImmutableSet<Vec3> RAYS;
   static
   {
+    ImmutableSet.Builder<Vec3> builder = ImmutableSet.builder();
     for(int i = 0; i < 16; ++i)
       for(int j = 0; j < 16; ++j)
         for(int k = 0; k < 16; ++k)
@@ -38,8 +40,9 @@ public class ExplosionHelper
             double dy = (float)j / 15F * 2F - 1F;
             double dz = (float)k / 15F * 2F - 1F;
             double mag = Math.sqrt(dx*dx + dy*dy + dz*dz);
-            RAYS.add(new Vec3(dx / mag * 0.3f, dy / mag * 0.3f, dz / mag * 0.3f));
+            builder.add(new Vec3(dx / mag * 0.3f, dy / mag * 0.3f, dz / mag * 0.3f));
           }
+    RAYS = builder.build();
   }
 
   public static List<Pair<Vec3, Boolean>> getExposurePoints(double sx, double sy, double sz, float power, Entity entity)
@@ -68,38 +71,47 @@ public class ExplosionHelper
     return points;
   }
 
-  public static Set<Pair<BlockPos, BlockState>> getAffectedBlocks(double sx, double sy, double sz, float power, ClientLevel level, float random)
+  public static Pair<Set<BlockPos>, Set<BlockPos>> getAffectedBlocks(Vec3 startPos, float power, ClientLevel level)
   {
-    Set<Pair<BlockPos, BlockState>> positions = new HashSet<>();
+    Set<BlockPos> outMin = new HashSet<>();
+    Set<BlockPos> outMax = new HashSet<>();
     for(Vec3 ray : RAYS)
     {
-      Vec3 pos = new Vec3(sx, sy, sz);
-      for(float rayStrength = power * (0.7F + random * 0.6F); rayStrength > 0F; rayStrength -= 0.22500001F, pos = pos.add(ray))
+      Vec3 rayPos = startPos.add(ray);
+      for(float rayStrengthMin = power * 0.7F, rayStrengthMax = power * 1.3F;
+        rayStrengthMax > 0F; rayStrengthMin -= 0.22500001F, rayStrengthMax -= 0.22500001F, rayPos = rayPos.add(ray))
       {
-        BlockPos blockPos = new BlockPos(pos);
-        if(!level.isInWorldBounds(blockPos))
+        BlockPos pos = new BlockPos(rayPos);
+        if(!level.isInWorldBounds(pos))
           break;
 
-        BlockState blockState = level.getBlockState(blockPos);
-        FluidState fluidState = level.getFluidState(blockPos);
+        BlockState blockState = level.getBlockState(pos);
+        FluidState fluidState = level.getFluidState(pos);
+        Block block = blockState.getBlock();
         if(!blockState.isAir() || !fluidState.isEmpty())
         {
-          float blastRes = Math.max(blockState.getBlock().getExplosionResistance(), fluidState.getExplosionResistance());
-          rayStrength -= (blastRes + 0.3F) * 0.3F;
+          float blastRes = (Math.max(block.getExplosionResistance(), fluidState.getExplosionResistance()) + 0.3F) * 0.3F;
+          rayStrengthMin -= blastRes;
+          rayStrengthMax -= blastRes;
         }
 
-        if(rayStrength > 0)
-          positions.add(Pair.of(blockPos, blockState));
+        if(rayStrengthMax <= 0F || outMin.contains(pos) || !Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(block))
+          continue;
+
+        if(rayStrengthMin > 0F)
+          outMin.add(pos);
+        else
+          outMax.add(pos);
       }
     }
-    return positions;
+    outMax.removeAll(outMin);
+    return Pair.of(outMin, outMax);
   }
 
-  public static Pair<Set<Vec3>, Set<Vec3>> getBlockPoints(double sx, double sy, double sz, float power, ClientLevel level)
+  public static Pair<Set<Vec3>, Set<Vec3>> getBlockPoints(Vec3 startPos, float power, ClientLevel level)
   {
     Set<Vec3> outMin = new HashSet<>();
     Set<Vec3> outMax = new HashSet<>();
-    Vec3 startPos = new Vec3(sx, sy, sz);
     for(Vec3 ray : RAYS)
     {
       Vec3 rayPos = startPos.add(ray);
@@ -119,12 +131,13 @@ public class ExplosionHelper
           rayStrengthMin -= blastRes;
           rayStrengthMax -= blastRes;
         }
-        if(!Configs.Lists.EXPLOSION_BLOCK_RAYS.shouldRender(block))
+
+        if(rayStrengthMax <= 0F || !Configs.Lists.EXPLOSION_BLOCK_RAYS.shouldRender(block))
           continue;
 
         if(rayStrengthMin > 0F)
           outMin.add(rayPos);
-        else if(rayStrengthMax > 0F)
+        else
           outMax.add(rayPos);
       }
     }
@@ -134,66 +147,52 @@ public class ExplosionHelper
   public static void explosion(double x, double y, double z)
   {
     if(Renderers.EXPLOSIONS.config.on())
-    {
       RenderHandler.addCuboid(x, y, z, Configs.Generic.EXPLOSION_BOX_SIZE.getDoubleValue()/2, Renderers.EXPLOSIONS.config.color1(), Renderers.EXPLOSIONS.config.color2(), Renderers.EXPLOSIONS.config.dur());
-      RenderHandler.addText(x, y, z, Component.Serializer.fromJsonLenient("\"BALLS\""), new Color4f(0.5f, 0.5f, 0.5f, 0.5f), 100);
-    }
   }
 
   public static void explosionEntityRays(double x, double y, double z, ClientLevel level, float power)
   {
-    if(Renderers.EXPLOSION_ENTITY_RAYS.config.on())
-    {
-      List<Entity> entities = level.getEntities(null, new AABB(
-        x - power*2 - 1, y - power*2 - 1, z - power*2 - 1,
-        x + power*2 + 1, y + power*2 + 1, z + power*2 + 1));
-      for(Entity entity : entities)
-        if(Configs.Lists.EXPLOSION_ENTITY_RAYS.shouldRender(entity.getType()))
-          for(Pair<Vec3, Boolean> ray : getExposurePoints(x, y, z, power, entity))
-          {
-            Vec3 pos = ray.getLeft();
-            RenderHandler.addLine(
-              pos.x(), pos.y(), pos.z(),
-              x, y, z,
-              ray.getRight() ? Renderers.EXPLOSION_ENTITY_RAYS.config.color1() : Renderers.EXPLOSION_ENTITY_RAYS.config.color2(),
-              Renderers.EXPLOSION_ENTITY_RAYS.config.dur());
-          }
-    }
+    if(!Renderers.EXPLOSION_ENTITY_RAYS.config.on())
+      return;
+
+    List<Entity> entities = level.getEntities(null, new AABB(
+      x - power*2 - 1, y - power*2 - 1, z - power*2 - 1,
+      x + power*2 + 1, y + power*2 + 1, z + power*2 + 1));
+    for(Entity entity : entities)
+      if(Configs.Lists.EXPLOSION_ENTITY_RAYS.shouldRender(entity.getType()))
+        for(Pair<Vec3, Boolean> ray : getExposurePoints(x, y, z, power, entity))
+        {
+          Vec3 pos = ray.getLeft();
+          RenderHandler.addLine(
+            pos.x(), pos.y(), pos.z(),
+            x, y, z,
+            ray.getRight() ? Renderers.EXPLOSION_ENTITY_RAYS.config.color1() : Renderers.EXPLOSION_ENTITY_RAYS.config.color2(),
+            Renderers.EXPLOSION_ENTITY_RAYS.config.dur());
+        }
   }
 
-  public static void explosionBlockRays(double x, double y, double z, ClientLevel level, float power)
+  public static void explosionBlockRays(Vec3 pos, ClientLevel level, float power)
   {
-    if(Renderers.EXPLOSION_BLOCK_RAYS.config.on())
-    {
-      Pair<Set<Vec3>, Set<Vec3>> points = getBlockPoints(x, y, z, power, level);
-      for(Vec3 min : points.getLeft())
-        RenderHandler.addPoint(min.x, min.y, min.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color1(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
-      for(Vec3 max : points.getRight())
-        RenderHandler.addPoint(max.x, max.y, max.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color2(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
-    }
+    if(!Renderers.EXPLOSION_BLOCK_RAYS.config.on())
+      return;
+
+    Pair<Set<Vec3>, Set<Vec3>> points = getBlockPoints(pos, power, level);
+    for(Vec3 min : points.getLeft())
+      RenderHandler.addPoint(min.x, min.y, min.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color1(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
+    for(Vec3 max : points.getRight())
+      RenderHandler.addPoint(max.x, max.y, max.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color2(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
   }
 
-  public static void explosionMinBlocks(double x, double y, double z, ClientLevel level, float power)
+  public static void explosionAffectedBlocks(Vec3 pos, ClientLevel level, float power)
   {
-    if(Renderers.EXPLOSION_MIN_BLOCKS.config.on())
-      for(Pair<BlockPos, BlockState> pair : getAffectedBlocks(x, y, z, power, level, 0F))
-        if(Configs.Lists.EXPLOSION_MIN_BLOCKS.shouldRender(pair.getRight().getBlock()))
-          RenderHandler.addCuboid(pair.getLeft(), Renderers.EXPLOSION_MIN_BLOCKS.config.color1(), Renderers.EXPLOSION_MIN_BLOCKS.config.color2(), Renderers.EXPLOSION_MIN_BLOCKS.config.dur());
-  }
+    if(!Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
+      return;
 
-  public static void explosionMaxBlocks(double x, double y, double z, ClientLevel level, float power)
-  {
-    if(Renderers.EXPLOSION_MAX_BLOCKS.config.on())
-      for(Pair<BlockPos, BlockState> pair : getAffectedBlocks(x, y, z, power, level, 1F))
-        if(Configs.Lists.EXPLOSION_MAX_BLOCKS.shouldRender(pair.getRight().getBlock()))
-          RenderHandler.addCuboid(pair.getLeft(), Renderers.EXPLOSION_MAX_BLOCKS.config.color1(), Renderers.EXPLOSION_MAX_BLOCKS.config.color2(), Renderers.EXPLOSION_MAX_BLOCKS.config.dur());
-  }
-
-  public static void explosionAffectedBlocks(double x, double y, double z, ClientLevel level, List<BlockPos> toBlow)
-  {
-    if(Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
-      for(BlockPos pos : toBlow)
-        if(Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(level.getBlockState(pos).getBlock()))
-          RenderHandler.addCuboid(pos, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color1(), Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color2(), Renderers.EXPLOSION_AFFECTED_BLOCKS.config.dur());
+    Pair<Set<BlockPos>, Set<BlockPos>> blocks = getAffectedBlocks(pos, power, level);
+    Color4f stroke = new Color4f(0, 0, 0, 0);
+    for(BlockPos min : blocks.getLeft())
+      RenderHandler.addCuboid(min, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color1(), stroke, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.dur());
+    for(BlockPos max : blocks.getRight())
+      RenderHandler.addCuboid(max, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color2(), stroke, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.dur());
   }
 }

@@ -10,7 +10,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Matrix4f;
-import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 
 import fi.dy.masa.malilib.interfaces.IClientTickHandler;
@@ -20,24 +19,24 @@ import fi.dy.masa.malilib.util.Color4f;
 import me.lntricate.entityvisualizer.config.Configs.Generic;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
+// import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
+// import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 public class RenderHandler implements IRenderer, IClientTickHandler
 {
   private static final Minecraft mc = Minecraft.getInstance();
-  private static final Font font = mc.font;
+  // private static final Font font = mc.font;
   private static final RenderHandler INSTANCE = new RenderHandler();
   private static record Index(double x, double y, double z, int n){}
   private static final Map<Index, Line> lines = new HashMap<>();
   private static final Map<Index, Quad> quads = new HashMap<>();
   private static final Map<Index, Point> points = new HashMap<>();
-  private static final Map<Index, QuadFollow> quadFollows = new HashMap<>();
-  private static final Map<Index, Text> texts = new HashMap<>();
+  // private static final Map<Index, QuadFollow> quadFollows = new HashMap<>();
+  // private static final Map<Index, Text> texts = new HashMap<>();
 
   public static RenderHandler getInstance()
   {
@@ -49,14 +48,6 @@ public class RenderHandler implements IRenderer, IClientTickHandler
   {
     Camera cam = mc.gameRenderer.getMainCamera();
     Vec3 cpos = cam.getPosition();
-    Quaternion rot = Vector3f.YP.rotationDegrees(-cam.getYRot());
-    rot.mul(Vector3f.XP.rotationDegrees(cam.getXRot()));
-
-    poseStack.pushPose();
-    poseStack.mulPose(rot);
-    poseStack.translate(cpos.x, 9-cpos.y, cpos.z);
-    poseStack.scale(-1, -1, -1);
-    Matrix4f matrix = poseStack.last().pose();
 
     RenderSystem.setShader(GameRenderer::getPositionColorShader);
     RenderUtils.setupBlend();
@@ -66,24 +57,31 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
     buffer.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
     for(Line line : lines.values())
-      line.render(matrix, buffer);
+      line.render(buffer, cpos.x, cpos.y, cpos.z);
     tesselator.end();
 
     buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
     for(Quad quad : quads.values())
-      quad.render(matrix, buffer);
-    for(QuadFollow quadFollow : quadFollows.values())
-      quadFollow.render(matrix, buffer, cam);
+      quad.render(buffer, cpos.x, cpos.y, cpos.z);
+    // for(QuadFollow quadFollow : quadFollows.values())
+    //   quadFollow.render(buffer, cam);
     tesselator.end();
 
     buffer.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+    Vector3f left = cam.getLeftVector();
+    Vector3f up = cam.getUpVector();
+    double size = Generic.POINT_SIZE.getDoubleValue();
+    double size2 = size/2;
+    double ax = up.x()*size2-cpos.x, ay = up.y()*size/3*2-cpos.y, az = up.z()*size2-cpos.z;
+    double bx = left.x()*size2-cpos.x, by = -up.y()*size/3-cpos.y, bz = left.z()*size2-cpos.z;
+    double cx = -left.x()*size2-cpos.x; double cz = -left.z()*size2-cpos.z;
     for(Point point : points.values())
-      point.render(matrix, buffer, cam);
+      point.render(buffer, ax, ay, az, bx, by, bz, cx, cz);
     tesselator.end();
 
-    for(Text text : texts.values())
-      text.render(poseStack, buffer, cam);
-    poseStack.popPose();
+    // for(Text text : texts.values())
+    //   text.render(poseStack, buffer, cam);
+    // poseStack.popPose();
   }
 
   @Override
@@ -100,19 +98,17 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
   public static void addPoint(double x, double y, double z, Color4f color, int ticks)
   {
-    points.put(new Index(x, y, z, 0), new Point((float)x, (float)y, (float)z, (float)Generic.POINT_SIZE.getDoubleValue(), color, mc.level.getGameTime() + ticks));
+    points.put(new Index(x, y, z, 0), new Point(x, y, z, color, mc.level.getGameTime() + ticks));
   }
 
   public static void addLine(double x, double y, double z, double X, double Y, double Z, Color4f color, int ticks)
   {
-    lines.put(new Index(x, y, z, 0), new Line((float)x, (float)y, (float)z, (float)X, (float)Y, (float)Z, color, mc.level.getGameTime() + ticks));
+    lines.put(new Index(x, y, z, 0), new Line(x, y, z, X, Y, Z, color, mc.level.getGameTime() + ticks));
   }
 
-  public static void addTrajectory(double x_, double y_, double z_, double X_, double Y_, double Z_, boolean xFirst, Color4f color, int ticks)
+  public static void addTrajectory(double x, double y, double z, double X, double Y, double Z, boolean xFirst, Color4f color, int ticks)
   {
     long time = mc.level.getGameTime() + ticks;
-    float x = (float)x_, y = (float)y_, z = (float)z_;
-    float X = (float)X_, Y = (float)Y_, Z = (float)Z_;
     lines.put(new Index(x, y, z, 1), new Line(x, y, z, x, Y, z, color, time));
     if(xFirst)
     {
@@ -126,11 +122,9 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     }
   }
 
-  public static void addCuboid(double x_, double y_, double z_, double X_, double Y_, double Z_, Color4f fill, Color4f stroke, int ticks)
+  public static void addCuboid(double x, double y, double z, double X, double Y, double Z, Color4f fill, Color4f stroke, int ticks)
   {
     long time = mc.level.getGameTime() + ticks;
-    float x = (float)x_, y = (float)y_, z = (float)z_;
-    float X = (float)X_, Y = (float)Y_, Z = (float)Z_;
     if(fill.a > 0)
     {
       quads.put(new Index(x, y, z, 1), new Quad(x, y, z, x, Y, z, x, Y, Z, x, y, Z, fill, time));
@@ -161,11 +155,11 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     }
   }
 
-  public static void addText(double x, double y, double z, Component component, Color4f background, int ticks)
-  {
-    quadFollows.put(new Index(x, y, z, 0), new QuadFollow((float)x, (float)y, (float)z, (font.width(component)+2)/80F, (font.lineHeight+2)/80F, background, mc.level.getGameTime() + ticks));
-    texts.put(new Index(x, y, z, 0), new Text((float)x, (float)y, (float)z, component, new Color4f(1F, 1F, 1F), mc.level.getGameTime() + ticks));
-  }
+  // public static void addText(double x, double y, double z, Component component, Color4f background, int ticks)
+  // {
+  //   quadFollows.put(new Index(x, y, z, 0), new QuadFollow((float)x, (float)y, (float)z, (font.width(component)+2)/80F, (font.lineHeight+2)/80F, background, mc.level.getGameTime() + ticks));
+  //   texts.put(new Index(x, y, z, 0), new Text((float)x, (float)y, (float)z, component, new Color4f(1F, 1F, 1F), mc.level.getGameTime() + ticks));
+  // }
 
   public static void addCuboid(BlockPos pos, Color4f fill, Color4f stroke, int ticks)
   {
@@ -187,69 +181,64 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     addCuboid(x - size, y - size, z - size, x + size, y + size, z + size, fill, stroke, ticks);
   }
 
-  private static final record Point(float x, float y, float z, float size, Color4f color, long removalTime)
+  private static final record Point(double x, double y, double z, Color4f color, long removalTime)
   {
-    public void render(Matrix4f matrix, BufferBuilder buffer, Camera cam)
+    public void render(BufferBuilder buffer, double ax, double ay, double az, double bx, double by, double bz, double cx, double cz)
     {
-      Matrix4f m = matrix.copy();
-      Quaternion rot = Vector3f.YP.rotationDegrees(-cam.getYRot());
-      rot.mul(Vector3f.XP.rotationDegrees(-cam.getXRot()));
-      m.translate(new Vector3f(x, -y, z));
-      m.multiply(rot);
-      buffer.vertex(m, 0,       size/3*2, 0).color(color.r, color.g, color.b, color.a).endVertex();
-      buffer.vertex(m, -size/2, -size/3,  0).color(color.r, color.g, color.b, color.a).endVertex();
-      buffer.vertex(m, size/2,  -size/3,  0).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x+ax, y+ay, z+az).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x+bx, y+by, z+bz).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x+cx, y+by, z+cz).color(color.r, color.g, color.b, color.a).endVertex();
     }
   }
 
-  private static record Line(float x, float y, float z, float X, float Y, float Z, Color4f color, long removalTime)
+  private static record Line(double x, double y, double z, double X, double Y, double Z, Color4f color, long removalTime)
   {
-    public void render(Matrix4f matrix, BufferBuilder buffer)
+    public void render(BufferBuilder buffer, double cx, double cy, double cz)
     {
-      buffer.vertex(matrix, x, y, z).color(color.r, color.g, color.b, color.a).endVertex();
-      buffer.vertex(matrix, X, Y, Z).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x-cx, y-cy, z-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(X-cx, Y-cy, Z-cz).color(color.r, color.g, color.b, color.a).endVertex();
     }
   }
 
-  private static final record Quad(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4, Color4f color, long removalTime)
+  private static final record Quad(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4, Color4f color, long removalTime)
   {
-    public void render(Matrix4f matrix, BufferBuilder buffer)
+    public void render(BufferBuilder buffer, double cx, double cy, double cz)
     {
-      buffer.vertex(matrix, x1, y1, z1).color(color.r, color.g, color.b, color.a).endVertex();
-      buffer.vertex(matrix, x2, y2, z2).color(color.r, color.g, color.b, color.a).endVertex();
-      buffer.vertex(matrix, x3, y3, z3).color(color.r, color.g, color.b, color.a).endVertex();
-      buffer.vertex(matrix, x4, y4, z4).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x1-cx, y1-cy, z1-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x2-cx, y2-cy, z2-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x3-cx, y3-cy, z3-cz).color(color.r, color.g, color.b, color.a).endVertex();
+      buffer.vertex(x4-cx, y4-cy, z4-cz).color(color.r, color.g, color.b, color.a).endVertex();
     }
   }
 
-  private static final record QuadFollow(float x, float y, float z, float w, float h, Color4f color, long removalTime)
-  {
-    public void render(Matrix4f matrix, BufferBuilder buffer, Camera cam)
-    {
-      Matrix4f m = matrix.copy();
-      Quaternion rot = Vector3f.YP.rotationDegrees(-cam.getYRot());
-      rot.mul(Vector3f.XP.rotationDegrees(-cam.getXRot()));
-      m.translate(new Vector3f(x, -y, z));
-      m.multiply(rot);
-      buffer.vertex(m, -w, -h, 0).color(color.r, color.g, color.b, color.a).endVertex();
-      buffer.vertex(m, w, -h, 0).color(color.r, color.g, color.b, color.a).endVertex();
-      buffer.vertex(m, w, h, 0).color(color.r, color.g, color.b, color.a).endVertex();
-      buffer.vertex(m, -w, h, 0).color(color.r, color.g, color.b, color.a).endVertex();
-    }
-  }
-
-  private static final record Text(float x, float y, float z, Component component, Color4f color, long removalTime)
-  {
-    public void render(PoseStack poseStack, BufferBuilder buffer, Camera cam)
-    {
-      poseStack.pushPose();
-      Quaternion rot = Vector3f.YP.rotationDegrees(180-cam.getYRot());
-      rot.mul(Vector3f.XP.rotationDegrees(cam.getXRot()));
-      poseStack.translate(x, 9-y, z);
-      poseStack.scale(0.025F, 0.025F, 0.025F);
-      poseStack.mulPose(rot);
-      font.draw(poseStack, component, -font.width(component)/2, -font.lineHeight/2, color.intValue);
-      poseStack.popPose();
-    }
-  }
+  // private static final record QuadFollow(float x, float y, float z, float w, float h, Color4f color, long removalTime)
+  // {
+  //   public void render(Matrix4f matrix, BufferBuilder buffer, Camera cam)
+  //   {
+  //     Matrix4f m = matrix.copy();
+  //     Quaternion rot = Vector3f.YP.rotationDegrees(-cam.getYRot());
+  //     rot.mul(Vector3f.XP.rotationDegrees(-cam.getXRot()));
+  //     m.translate(new Vector3f(x, -y, z));
+  //     m.multiply(rot);
+  //     buffer.vertex(m, -w, -h, 0).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(m, w, -h, 0).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(m, w, h, 0).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(m, -w, h, 0).color(color.r, color.g, color.b, color.a).endVertex();
+  //   }
+  // }
+  //
+  // private static final record Text(float x, float y, float z, Component component, Color4f color, long removalTime)
+  // {
+  //   public void render(PoseStack poseStack, BufferBuilder buffer, Camera cam)
+  //   {
+  //     poseStack.pushPose();
+  //     Quaternion rot = Vector3f.YP.rotationDegrees(180-cam.getYRot());
+  //     rot.mul(Vector3f.XP.rotationDegrees(cam.getXRot()));
+  //     poseStack.translate(x, -y, z);
+  //     poseStack.scale(0.025F, 0.025F, 0.025F);
+  //     poseStack.mulPose(rot);
+  //     font.draw(poseStack, component, -font.width(component)/2, -font.lineHeight/2, color.intValue);
+  //     poseStack.popPose();
+  //   }
+  // }
 }

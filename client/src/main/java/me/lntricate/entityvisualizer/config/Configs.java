@@ -169,8 +169,6 @@ public class Configs implements IConfigHandler
   {
     EXPLOSION_ENTITY_RAYS("explosionEntityRays", ListContext.ENTITIES, "Explosion Entity Rays"),
     EXPLOSION_BLOCK_RAYS("explosionBlockRays", ListContext.BLOCKS, "Explosion Block Rays"),
-    EXPLOSION_MIN_BLOCKS("explosionMinBlocks", ListContext.BLOCKS, "Explosion Min Rays"),
-    EXPLOSION_MAX_BLOCKS("explosionMaxBlocks", ListContext.BLOCKS, "Explosion Max Rays"),
     EXPLOSION_AFFECTED_BLOCKS("explosionAffectedBlocks", ListContext.BLOCKS, "Explosion Affected Blocks"),
 
     ENTITY_CREATION("entityCreation", ListContext.ENTITIES, "Entity Creation"),
@@ -191,10 +189,10 @@ public class Configs implements IConfigHandler
       switch(context)
       {
         case BLOCKS:
-          instantiate(name, ListType.NONE, ImmutableList.of(), ImmutableList.of("air"), prettyName);
+          instantiate(name, ListType.BLACKLIST, ImmutableList.of(), ImmutableList.of("air"), prettyName);
           break;
         case ENTITIES:
-          instantiate(name, ListType.NONE, ImmutableList.of(), ImmutableList.of("player"), prettyName);
+          instantiate(name, ListType.BLACKLIST, ImmutableList.of(), ImmutableList.of("player"), prettyName);
           break;
       }
     }

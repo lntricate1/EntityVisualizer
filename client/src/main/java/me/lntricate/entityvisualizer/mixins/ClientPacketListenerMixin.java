@@ -3,10 +3,12 @@ package me.lntricate.entityvisualizer.mixins;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import me.lntricate.entityvisualizer.config.Configs.Renderers;
 import me.lntricate.entityvisualizer.helpers.EntityPositionHelper;
 import me.lntricate.entityvisualizer.helpers.ExplosionHelper;
 import me.lntricate.entityvisualizer.network.ClientNetworkHandler;
@@ -25,6 +27,10 @@ public class ClientPacketListenerMixin
 {
   @Shadow @Final private Minecraft minecraft;
   @Shadow private ClientLevel level;
+
+  @Unique private static double memX = 0D, memY = 0D, memZ = 0D;
+  @Unique private static float memPower;
+  @Unique private static long memTime = 0L;
 
   private final String mainThreadInjectionPoint = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/util/thread/BlockableEventLoop;)V";
 
@@ -45,12 +51,21 @@ public class ClientPacketListenerMixin
     double y = packet.getY();
     double z = packet.getZ();
     float power = packet.getPower();
-    Vec3 pos = new Vec3(x, y, z);
+    if(y == memY && x == memX && z == memZ && level.getGameTime() == memTime && power == memPower)
+      return;
 
-    ExplosionHelper.explosion(x, y, z);
-    ExplosionHelper.explosionBlockRays(pos, level, power);
-    ExplosionHelper.explosionEntityRays(x, y, z, level, power);
-    ExplosionHelper.explosionAffectedBlocks(pos, level, power);
+    Vec3 pos = new Vec3(x, y, z);
+    if(Renderers.EXPLOSIONS.config.on())
+      ExplosionHelper.explosion(x, y, z);
+
+    if(Renderers.EXPLOSION_BLOCK_RAYS.config.on())
+      ExplosionHelper.explosionBlockRays(pos, level, power);
+
+    if(Renderers.EXPLOSION_ENTITY_RAYS.config.on())
+      ExplosionHelper.explosionEntityRays(x, y, z, level, power);
+
+    if(Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
+      ExplosionHelper.explosionAffectedBlocks(pos, level, power);
   }
 
   @Inject(method = "handleAddEntity", at = @At("TAIL"))

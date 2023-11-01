@@ -1,8 +1,10 @@
 package me.lntricate.entityvisualizer.helpers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -45,12 +47,13 @@ public class ExplosionHelper
     RAYS = builder.build();
   }
 
-  public static List<Pair<Vec3, Boolean>> getExposurePoints(double sx, double sy, double sz, float power, Entity entity)
+  public static Map<Vec3, Boolean> getExposurePoints(double sx, double sy, double sz, float power, Entity entity)
   {
-    ArrayList<Pair<Vec3, Boolean>> points = new ArrayList<>();
+    Map<Vec3, Boolean> points = new HashMap<>();
     if(entity.distanceToSqr(sx, sy, sz) > power*power)
       return points;
 
+    Vec3 pos = new Vec3(sx, sy, sz);
     AABB aabb = entity.getBoundingBox();
     double ax = 1D / ((aabb.maxX - aabb.minX) * 2D + 1D);
     double ay = 1D / ((aabb.maxY - aabb.minY) * 2D + 1D);
@@ -65,8 +68,8 @@ public class ExplosionHelper
       double ly = Mth.lerp(y, aabb.minY, aabb.maxY);
       double lz = Mth.lerp(z, aabb.minZ, aabb.maxZ);
       Vec3 vec3 = new Vec3(lx + bx, ly, lz + bz);
-      boolean hit = entity.level.clip(new ClipContext(vec3, new Vec3(sx, sy, sz), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)).getType() == HitResult.Type.MISS;
-      points.add(Pair.of(vec3, hit));
+      boolean hit = entity.level.clip(new ClipContext(vec3, pos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)).getType() == HitResult.Type.MISS;
+      points.put(vec3, hit);
     }
     return points;
   }
@@ -146,36 +149,29 @@ public class ExplosionHelper
 
   public static void explosion(double x, double y, double z)
   {
-    if(Renderers.EXPLOSIONS.config.on())
-      RenderHandler.addCuboid(x, y, z, Configs.Generic.EXPLOSION_BOX_SIZE.getDoubleValue()/2, Renderers.EXPLOSIONS.config.color1(), Renderers.EXPLOSIONS.config.color2(), Renderers.EXPLOSIONS.config.dur());
+    RenderHandler.addCuboid(x, y, z, Configs.Generic.EXPLOSION_BOX_SIZE.getDoubleValue()/2, Renderers.EXPLOSIONS.config.color1(), Renderers.EXPLOSIONS.config.color2(), Renderers.EXPLOSIONS.config.dur());
   }
 
   public static void explosionEntityRays(double x, double y, double z, ClientLevel level, float power)
   {
-    if(!Renderers.EXPLOSION_ENTITY_RAYS.config.on())
-      return;
-
     List<Entity> entities = level.getEntities(null, new AABB(
       x - power*2 - 1, y - power*2 - 1, z - power*2 - 1,
       x + power*2 + 1, y + power*2 + 1, z + power*2 + 1));
     for(Entity entity : entities)
       if(Configs.Lists.EXPLOSION_ENTITY_RAYS.shouldRender(entity.getType()))
-        for(Pair<Vec3, Boolean> ray : getExposurePoints(x, y, z, power, entity))
+        for(Map.Entry<Vec3, Boolean> ray : getExposurePoints(x, y, z, power, entity).entrySet())
         {
-          Vec3 pos = ray.getLeft();
+          Vec3 pos = ray.getKey();
           RenderHandler.addLine(
             pos.x(), pos.y(), pos.z(),
             x, y, z,
-            ray.getRight() ? Renderers.EXPLOSION_ENTITY_RAYS.config.color1() : Renderers.EXPLOSION_ENTITY_RAYS.config.color2(),
+            ray.getValue() ? Renderers.EXPLOSION_ENTITY_RAYS.config.color1() : Renderers.EXPLOSION_ENTITY_RAYS.config.color2(),
             Renderers.EXPLOSION_ENTITY_RAYS.config.dur());
         }
   }
 
   public static void explosionBlockRays(Vec3 pos, ClientLevel level, float power)
   {
-    if(!Renderers.EXPLOSION_BLOCK_RAYS.config.on())
-      return;
-
     Pair<Set<Vec3>, Set<Vec3>> points = getBlockPoints(pos, power, level);
     for(Vec3 min : points.getLeft())
       RenderHandler.addPoint(min.x, min.y, min.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color1(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
@@ -185,9 +181,6 @@ public class ExplosionHelper
 
   public static void explosionAffectedBlocks(Vec3 pos, ClientLevel level, float power)
   {
-    if(!Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
-      return;
-
     Pair<Set<BlockPos>, Set<BlockPos>> blocks = getAffectedBlocks(pos, power, level);
     Color4f stroke = new Color4f(0, 0, 0, 0);
     for(BlockPos min : blocks.getLeft())

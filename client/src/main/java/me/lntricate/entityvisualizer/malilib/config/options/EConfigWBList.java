@@ -33,9 +33,13 @@ public class EConfigWBList extends EConfigMulti
 
   public boolean test(String string)
   {
-    return (ListType)getConfig(0).getValue() == ListType.WHITELIST ?
-      ((EConfigStringList)getConfig(1)).getValue().contains(string) :
-      !((EConfigStringList)getConfig(2)).getValue().contains(string);
+    ListType type = (ListType)getConfig(0).getValue();
+    return switch(type)
+    {
+      case WHITELIST -> ((EConfigStringList)getConfig(1)).getValue().contains(string);
+      case BLACKLIST -> !((EConfigStringList)getConfig(2)).getValue().contains(string);
+      case NONE -> true;
+    };
   }
 
   @Override

@@ -31,7 +31,8 @@ public class RenderHandler implements IRenderer, IClientTickHandler
   private static final Minecraft mc = Minecraft.getInstance();
   // private static final Font font = mc.font;
   private static final RenderHandler INSTANCE = new RenderHandler();
-  private static record Index(double x, double y, double z, int n){}
+  private static record Index(double x, double y, double z, Shape s, int n){}
+  private static enum Shape{LINE, TRAJECTORY, CUBOID, POINT}
   private static final Map<Index, Line> lines = new HashMap<>();
   private static final Map<Index, Quad> quads = new HashMap<>();
   private static final Map<Index, Point> points = new HashMap<>();
@@ -48,6 +49,9 @@ public class RenderHandler implements IRenderer, IClientTickHandler
   {
     Camera cam = mc.gameRenderer.getMainCamera();
     Vec3 cpos = cam.getPosition();
+    double x = cpos.x, y = cpos.y, z = cpos.z;
+    Vector3f left = cam.getLeftVector();
+    Vector3f up = cam.getUpVector();
 
     RenderSystem.setShader(GameRenderer::getPositionColorShader);
     RenderUtils.setupBlend();
@@ -57,32 +61,44 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
     buffer.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
     for(Line line : lines.values())
-      line.render(buffer, cpos.x, cpos.y, cpos.z);
+      line.render(buffer, x, y, z);
     tesselator.end();
 
     buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
     for(Quad quad : quads.values())
-      quad.render(buffer, cpos.x, cpos.y, cpos.z);
-    // for(QuadFollow quadFollow : quadFollows.values())
-    //   quadFollow.render(buffer, cam);
+      quad.render(buffer, x, y, z);
+    // if(!quadFollows.isEmpty())
+    //   renderQuadFollows(buffer, left, up, x, y, z);
     tesselator.end();
 
     buffer.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
-    Vector3f left = cam.getLeftVector();
-    Vector3f up = cam.getUpVector();
-    double size = Generic.POINT_SIZE.getDoubleValue();
-    double size2 = size/2;
-    double ax = up.x()*size2-cpos.x, ay = up.y()*size/3*2-cpos.y, az = up.z()*size2-cpos.z;
-    double bx = left.x()*size2-cpos.x, by = -up.y()*size/3-cpos.y, bz = left.z()*size2-cpos.z;
-    double cx = -left.x()*size2-cpos.x; double cz = -left.z()*size2-cpos.z;
-    for(Point point : points.values())
-      point.render(buffer, ax, ay, az, bx, by, bz, cx, cz);
+    if(!points.isEmpty())
+      renderPoints(buffer, left, up, x, y, z);
     tesselator.end();
 
     // for(Text text : texts.values())
     //   text.render(poseStack, buffer, cam);
     // poseStack.popPose();
   }
+
+  private static void renderPoints(BufferBuilder buffer, Vector3f left, Vector3f up, double x, double y, double z)
+  {
+    double size = Generic.POINT_SIZE.getDoubleValue();
+    double size2 = size/2;
+    double ux = up.x()*size2, uy = up.y()*size/3, uz = up.z()*size2;
+    double lx = left.x()*size2, lz = left.z()*size2;
+    double ax = ux-x, ay = 2*uy-y, az = uz-z, bx = lx-x, by = -uy-y, bz = lz-z, cx = -lx-x, cz = -lz-z;
+    for(Point point : points.values())
+      point.render(buffer, ax, ay, az, bx, by, bz, cx, cz);
+  }
+
+  // private static void renderQuadFollows(BufferBuilder buffer, Vector3f left, Vector3f up, double x, double y, double z)
+  // {
+  //   double ux = up.x(), uy = up.y(), uz = up.z();
+  //   double lx = left.x(), lz = left.z();
+  //   for(QuadFollow quadFollow : quadFollows.values())
+  //     quadFollow.render(buffer, ux, uy, uz, lx, lz, x, y, z);
+  // }
 
   @Override
   public void onClientTick(Minecraft minecraft)
@@ -98,27 +114,27 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
   public static void addPoint(double x, double y, double z, Color4f color, int ticks)
   {
-    points.put(new Index(x, y, z, 0), new Point(x, y, z, color, mc.level.getGameTime() + ticks));
+    points.put(new Index(x, y, z, Shape.POINT, 0), new Point(x, y, z, color, mc.level.getGameTime() + ticks));
   }
 
   public static void addLine(double x, double y, double z, double X, double Y, double Z, Color4f color, int ticks)
   {
-    lines.put(new Index(x, y, z, 0), new Line(x, y, z, X, Y, Z, color, mc.level.getGameTime() + ticks));
+    lines.put(new Index(x, y, z, Shape.LINE, 0), new Line(x, y, z, X, Y, Z, color, mc.level.getGameTime() + ticks));
   }
 
   public static void addTrajectory(double x, double y, double z, double X, double Y, double Z, boolean xFirst, Color4f color, int ticks)
   {
     long time = mc.level.getGameTime() + ticks;
-    lines.put(new Index(x, y, z, 1), new Line(x, y, z, x, Y, z, color, time));
+    lines.put(new Index(x, y, z, Shape.TRAJECTORY, 0), new Line(x, y, z, x, Y, z, color, time));
     if(xFirst)
     {
-      lines.put(new Index(x, y, z, 2), new Line(x, Y, z, X, Y, z, color, time));
-      lines.put(new Index(x, y, z, 3), new Line(X, Y, z, X, Y, Z, color, time));
+      lines.put(new Index(x, y, z, Shape.TRAJECTORY, 1), new Line(x, Y, z, X, Y, z, color, time));
+      lines.put(new Index(x, y, z, Shape.TRAJECTORY, 2), new Line(X, Y, z, X, Y, Z, color, time));
     }
     else
     {
-      lines.put(new Index(x, y, z, 2), new Line(x, Y, z, x, Y, Z, color, time));
-      lines.put(new Index(x, y, z, 3), new Line(x, Y, Z, X, Y, Z, color, time));
+      lines.put(new Index(x, y, z, Shape.TRAJECTORY, 1), new Line(x, Y, z, x, Y, Z, color, time));
+      lines.put(new Index(x, y, z, Shape.TRAJECTORY, 2), new Line(x, Y, Z, X, Y, Z, color, time));
     }
   }
 
@@ -127,31 +143,31 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     long time = mc.level.getGameTime() + ticks;
     if(fill.a > 0)
     {
-      quads.put(new Index(x, y, z, 1), new Quad(x, y, z, x, Y, z, x, Y, Z, x, y, Z, fill, time));
-      quads.put(new Index(x, y, z, 2), new Quad(X, y, z, X, y, Z, X, Y, Z, X, Y, z, fill, time));
+      quads.put(new Index(x, y, z, Shape.CUBOID, 0), new Quad(x, y, z, x, Y, z, x, Y, Z, x, y, Z, fill, time));
+      quads.put(new Index(x, y, z, Shape.CUBOID, 1), new Quad(X, y, z, X, y, Z, X, Y, Z, X, Y, z, fill, time));
 
-      quads.put(new Index(x, y, z, 3), new Quad(x, y, z, x, y, Z, X, y, Z, X, y, z, fill, time));
-      quads.put(new Index(x, y, z, 4), new Quad(x, Y, z, X, Y, z, X, Y, Z, x, Y, Z, fill, time));
+      quads.put(new Index(x, y, z, Shape.CUBOID, 2), new Quad(x, y, z, x, y, Z, X, y, Z, X, y, z, fill, time));
+      quads.put(new Index(x, y, z, Shape.CUBOID, 3), new Quad(x, Y, z, X, Y, z, X, Y, Z, x, Y, Z, fill, time));
 
-      quads.put(new Index(x, y, z, 5), new Quad(x, y, z, X, y, z, X, Y, z, x, Y, z, fill, time));
-      quads.put(new Index(x, y, z, 6), new Quad(x, y, Z, x, Y, Z, X, Y, Z, X, y, Z, fill, time));
+      quads.put(new Index(x, y, z, Shape.CUBOID, 4), new Quad(x, y, z, X, y, z, X, Y, z, x, Y, z, fill, time));
+      quads.put(new Index(x, y, z, Shape.CUBOID, 5), new Quad(x, y, Z, x, Y, Z, X, Y, Z, X, y, Z, fill, time));
     }
     if(stroke.a > 0)
     {
-      lines.put(new Index(x, y, z, 1), new Line(x, y, z, X, y, z, stroke, time));
-      lines.put(new Index(x, y, z, 2), new Line(X, y, z, X, Y, z, stroke, time));
-      lines.put(new Index(x, y, z, 3), new Line(X, Y, z, x, Y, z, stroke, time));
-      lines.put(new Index(x, y, z, 4), new Line(x, Y, z, x, y, z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 6), new Line(x, y, z, X, y, z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 7), new Line(X, y, z, X, Y, z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 8), new Line(X, Y, z, x, Y, z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 9), new Line(x, Y, z, x, y, z, stroke, time));
 
-      lines.put(new Index(x, y, z, 5), new Line(x, y, z, x, y, Z, stroke, time));
-      lines.put(new Index(x, y, z, 6), new Line(X, y, z, X, y, Z, stroke, time));
-      lines.put(new Index(x, y, z, 7), new Line(X, Y, z, X, Y, Z, stroke, time));
-      lines.put(new Index(x, y, z, 8), new Line(x, Y, z, x, Y, Z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 10), new Line(x, y, z, x, y, Z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 11), new Line(X, y, z, X, y, Z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 12), new Line(X, Y, z, X, Y, Z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 13), new Line(x, Y, z, x, Y, Z, stroke, time));
 
-      lines.put(new Index(x, y, z, 9), new Line(x, y, Z, X, y, Z, stroke, time));
-      lines.put(new Index(x, y, z, 10), new Line(X, y, Z, X, Y, Z, stroke, time));
-      lines.put(new Index(x, y, z, 11), new Line(X, Y, Z, x, Y, Z, stroke, time));
-      lines.put(new Index(x, y, z, 12), new Line(x, Y, Z, x, y, Z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 14), new Line(x, y, Z, X, y, Z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 15), new Line(X, y, Z, X, Y, Z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 16), new Line(X, Y, Z, x, Y, Z, stroke, time));
+      lines.put(new Index(x, y, z, Shape.CUBOID, 17), new Line(x, Y, Z, x, y, Z, stroke, time));
     }
   }
 
@@ -213,20 +229,18 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
   // private static final record QuadFollow(float x, float y, float z, float w, float h, Color4f color, long removalTime)
   // {
-  //   public void render(Matrix4f matrix, BufferBuilder buffer, Camera cam)
+  //   public void render(BufferBuilder buffer, double ux, double uy, double uz, double lx, double lz, double cx, double cy, double cz)
   //   {
-  //     Matrix4f m = matrix.copy();
-  //     Quaternion rot = Vector3f.YP.rotationDegrees(-cam.getYRot());
-  //     rot.mul(Vector3f.XP.rotationDegrees(-cam.getXRot()));
-  //     m.translate(new Vector3f(x, -y, z));
-  //     m.multiply(rot);
-  //     buffer.vertex(m, -w, -h, 0).color(color.r, color.g, color.b, color.a).endVertex();
-  //     buffer.vertex(m, w, -h, 0).color(color.r, color.g, color.b, color.a).endVertex();
-  //     buffer.vertex(m, w, h, 0).color(color.r, color.g, color.b, color.a).endVertex();
-  //     buffer.vertex(m, -w, h, 0).color(color.r, color.g, color.b, color.a).endVertex();
+  //     ux *= h; uy *= h; uz *= h;
+  //     lx *= w; lz *= w;
+  //     double dx = ux+lx, dy = uy, dz = uz+lz;
+  //     buffer.vertex(dx-cx, dy-cy, dz-cz).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(-dx-cx, dy-cy, -dz-cx).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(-dx-cx, -dy-cy, -dz-cx).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(-dx-cx, -dy-cy, dz-cx).color(color.r, color.g, color.b, color.a).endVertex();
   //   }
   // }
-  //
+
   // private static final record Text(float x, float y, float z, Component component, Color4f color, long removalTime)
   // {
   //   public void render(PoseStack poseStack, BufferBuilder buffer, Camera cam)

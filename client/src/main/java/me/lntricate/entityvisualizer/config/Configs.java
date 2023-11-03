@@ -19,6 +19,7 @@ import me.lntricate.entityvisualizer.malilib.config.options.EConfigBoolean;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigDouble;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigHotkey;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigRenderer;
+import me.lntricate.entityvisualizer.malilib.config.options.EConfigString;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigWBList;
 import me.lntricate.entityvisualizer.network.ClientNetworkHandler;
 import net.minecraft.world.entity.EntityType;
@@ -68,6 +69,9 @@ public class Configs implements IConfigHandler
   public static class Generic
   {
     public static final EConfigHotkey OPEN_CONFIG_GUI = new EConfigHotkey("openConfigGui", "V,C", "A hotkey to open the in-game Config GUI");
+    public static final EConfigHotkey ENTITY_DATA = new EConfigHotkey("getEntityData", "BUTTON_2", "A hotkey to get entity position and motion\nBy default, you can shift-click the message to copy it into chat");
+    public static final EConfigString ENTITY_DATA_FORMAT = new EConfigString("getEntityDataFormat",
+      "#gold\"%countx \", #light_purple\"%name\", \" | \", {\"insertion\":\"%x, %y, %z\",\"text\":\"\",\"extra\":[#red\"%x \", #green\"%y \", #blue\"%z\"]}, \" | \", {\"insertion\":\"%mx, %my, %mz\",\"color\":\"yellow\",\"text\":\"%mx %my %mz\"}", "The format for getEntityData.\nSee https://github.com/axialeaa/colorful-minihud for how to format");
     public static final EConfigDouble EXPLOSION_BOX_SIZE = new EConfigDouble("explosionBoxSize", 0.25, "Size of the explosion boxes");
     public static final EConfigDouble POINT_SIZE = new EConfigDouble("pointSize", 0.02, "Size of the points in the Block Rays renderer");
 
@@ -84,13 +88,16 @@ public class Configs implements IConfigHandler
     public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of
     (
       OPEN_CONFIG_GUI,
+      ENTITY_DATA,
+      ENTITY_DATA_FORMAT,
       EXPLOSION_BOX_SIZE,
       POINT_SIZE
     );
 
     public static final ImmutableList<IHotkey> HOTKEYS = ImmutableList.of
     (
-      OPEN_CONFIG_GUI
+      OPEN_CONFIG_GUI,
+      ENTITY_DATA
     );
   }
 

@@ -9,6 +9,7 @@ import fi.dy.masa.malilib.gui.GuiConfigsBase.ConfigOptionWrapper;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.gui.button.IButtonActionListener;
+import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.StringUtils;
 import me.lntricate.entityvisualizer.EntityVisualizerMod;
 import me.lntricate.entityvisualizer.config.Configs;
@@ -25,19 +26,17 @@ public class GuiConfigs extends EGuiConfigsBase
 
   public static enum ConfigGuiTab
   {
-    GENERIC("entityvisualizer.gui.button.config_gui.generic", Configs.Generic.getOptions(), 200),
-    RENDERERS("entityvisualizer.gui.button.config_gui.renderers", Configs.Renderers.getOptions(), 400),
-    LISTS("entityvisualizer.gui.button.config_gui.lists", Configs.Lists.getOptions(), 300);
+    GENERIC("entityvisualizer.gui.button.config_gui.generic", Configs.Generic.getOptions()),
+    RENDERERS("entityvisualizer.gui.button.config_gui.renderers", Configs.Renderers.getOptions()),
+    LISTS("entityvisualizer.gui.button.config_gui.lists", Configs.Lists.getOptions());
 
     private final String translationKey;
     private final ImmutableList<IConfigBase> OPTIONS;
-    private final int width;
 
-    private ConfigGuiTab(String translationKey, ImmutableList<IConfigBase> OPTIONS, int width)
+    private ConfigGuiTab(String translationKey, ImmutableList<IConfigBase> OPTIONS)
     {
       this.translationKey = translationKey;
       this.OPTIONS = OPTIONS;
-      this.width = width;
     }
 
     public String getDisplayName()
@@ -48,11 +47,6 @@ public class GuiConfigs extends EGuiConfigsBase
     public ImmutableList<IConfigBase> getOptions()
     {
       return OPTIONS;
-    }
-
-    public int getWidth()
-    {
-      return width;
     }
   }
 
@@ -70,7 +64,10 @@ public class GuiConfigs extends EGuiConfigsBase
   @Override
   protected int getConfigWidth()
   {
-    return tab.getWidth();
+    int labelWidth = 0;
+    for(IConfigBase config : tab.getOptions())
+      labelWidth = Math.max(labelWidth, font.width(config.getName()));
+    return GuiUtils.getScaledWindowWidth() - labelWidth - 50;
   }
 
   @Override

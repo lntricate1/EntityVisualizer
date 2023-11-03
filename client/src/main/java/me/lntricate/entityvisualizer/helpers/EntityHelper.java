@@ -46,7 +46,7 @@ public class EntityHelper
   public static Vec3 vel(Entity entity)
   {
     int id = entity.getId();
-    return prevVel.containsKey(id) ? prevPos.get(id) : entity.getDeltaMovement();
+    return prevVel.containsKey(id) ? prevVel.get(id) : entity.getDeltaMovement();
   }
 
   public static EntityData data(int id)

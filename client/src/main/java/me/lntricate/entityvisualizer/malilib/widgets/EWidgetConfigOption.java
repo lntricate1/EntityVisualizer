@@ -17,9 +17,6 @@ import fi.dy.masa.malilib.config.IConfigValue;
 import fi.dy.masa.malilib.config.IStringRepresentable;
 import fi.dy.masa.malilib.gui.GuiTextFieldGeneric;
 import fi.dy.masa.malilib.gui.GuiConfigsBase.ConfigOptionWrapper;
-import fi.dy.masa.malilib.gui.button.ButtonBase;
-import fi.dy.masa.malilib.gui.button.ButtonGeneric;
-import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.gui.interfaces.IConfigInfoProvider;
 import fi.dy.masa.malilib.gui.interfaces.IKeybindConfigGui;
 import fi.dy.masa.malilib.gui.interfaces.ITextFieldListener;
@@ -32,8 +29,9 @@ import fi.dy.masa.malilib.hotkeys.IHotkey;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings;
 import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.KeyCodes;
-import fi.dy.masa.malilib.util.StringUtils;
 import me.lntricate.entityvisualizer.malilib.config.IEConfigWidgetable;
+import me.lntricate.entityvisualizer.malilib.config.options.EConfigBoolean;
+import me.lntricate.entityvisualizer.malilib.config.options.EConfigHotkey;
 
 public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrapper>
 {
@@ -52,9 +50,11 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
     this.wrapper = wrapper;
     this.labelWidth = labelWidth;
     this.x = x; this.y = y;
-    w = configWidth; h = 20;
-    addLabel(wrapper.getConfig());
-    addConfigOption(configWidth, wrapper.getConfig());
+    IConfigBase config = wrapper.getConfig();
+    w = config instanceof EConfigBoolean || config instanceof EConfigHotkey ? Math.min(configWidth, 400) : configWidth;
+    h = 20;
+    addLabel(config);
+    addConfigOption(w, config);
   }
 
   // ONLY RUN ONCE
@@ -78,9 +78,9 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
 
   protected void addConfigOption(int w, IConfigBase config)
   {
-
-    ((IEConfigWidgetable)config).createWidgets(this, parent, x, y, w, h, host, host.getDialogHandler());
-    ((IEConfigWidgetable)config).createResetButton(this, x + w + 2, y, w, h);
+    ResetButton resetButton = new ResetButton(x + w + 2, y, (IConfigResettable)config, this);
+    ((IEConfigWidgetable)config).createWidgets(this, parent, x, y, w, h, host, resetButton);
+    addWidget(resetButton);
   }
 
   public void remakeWidgets()
@@ -107,15 +107,6 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
   public void addWidgetPublic(WidgetBase widget)
   {
     subWidgets.add(widget);
-  }
-
-  public ButtonGeneric createResetButton(int x, int y, IConfigResettable config)
-  {
-    String label = StringUtils.translate("malilib.gui.button.reset.caps");
-    ButtonGeneric resetButton = new ButtonGeneric(x, y, -1, 20, label);
-    resetButton.setEnabled(config.isModified());
-    resetButton.setActionListener(new ListenerButtonReset(config));
-    return resetButton;
   }
 
   public void addConfigTextFieldEntry(int x, int y, int configWidth, int configHeight, IConfigValue config)
@@ -201,22 +192,6 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
     {
       config.setValueFromString(textField.getValue());
       return false;
-    }
-  }
-
-  private static class ListenerButtonReset implements IButtonActionListener
-  {
-    private final IConfigResettable config;
-
-    public ListenerButtonReset(IConfigResettable config)
-    {
-      this.config = config;
-    }
-
-    @Override
-    public void actionPerformedWithButton(ButtonBase button, int mouseButton)
-    {
-      config.resetToDefault();
     }
   }
 }

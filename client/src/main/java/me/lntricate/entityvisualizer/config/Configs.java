@@ -69,9 +69,10 @@ public class Configs implements IConfigHandler
   public static class Generic
   {
     public static final EConfigHotkey OPEN_CONFIG_GUI = new EConfigHotkey("openConfigGui", "V,C", "A hotkey to open the in-game Config GUI");
-    public static final EConfigHotkey ENTITY_DATA = new EConfigHotkey("getEntityData", "BUTTON_2", "A hotkey to get entity position and motion\nBy default, you can shift-click the message to copy it into chat");
+    public static final EConfigHotkey ENTITY_DATA = new EConfigHotkey("getEntityData", "LEFT_ALT,BUTTON_2", "A hotkey to get entity position and motion\nBy default, you can shift-click the message to copy it into chat");
     public static final EConfigString ENTITY_DATA_FORMAT = new EConfigString("getEntityDataFormat",
       "#gold\"%countx \", #light_purple\"%name\", \" | \", {\"insertion\":\"%x, %y, %z\",\"text\":\"\",\"extra\":[#red\"%x \", #green\"%y \", #blue\"%z\"]}, \" | \", {\"insertion\":\"%mx, %my, %mz\",\"color\":\"yellow\",\"text\":\"%mx %my %mz\"}", "The format for getEntityData.\nSee https://github.com/axialeaa/colorful-minihud for how to format");
+    public static final EConfigDouble ENTITY_DATA_RANGE = new EConfigDouble("getEntityDataRange", 10, "The length of the raycast for getting entity data");
     public static final EConfigDouble EXPLOSION_BOX_SIZE = new EConfigDouble("explosionBoxSize", 0.25, "Size of the explosion boxes");
     public static final EConfigDouble POINT_SIZE = new EConfigDouble("pointSize", 0.02, "Size of the points in the Block Rays renderer");
 
@@ -90,6 +91,7 @@ public class Configs implements IConfigHandler
       OPEN_CONFIG_GUI,
       ENTITY_DATA,
       ENTITY_DATA_FORMAT,
+      ENTITY_DATA_RANGE,
       EXPLOSION_BOX_SIZE,
       POINT_SIZE
     );
@@ -220,6 +222,11 @@ public class Configs implements IConfigHandler
     public static ImmutableList<IHotkey> getHotkeys()
     {
       return ImmutableList.of();
+    }
+
+    public boolean shouldRender(String key)
+    {
+      return config.test(key);
     }
 
     public boolean shouldRender(EntityType<?> type)

@@ -1,6 +1,5 @@
 package me.lntricate.entityvisualizer.helpers;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +16,7 @@ import me.lntricate.entityvisualizer.config.Configs.Renderers;
 import me.lntricate.entityvisualizer.event.RenderHandler;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
@@ -30,6 +30,10 @@ import net.minecraft.world.phys.Vec3;
 public class ExplosionHelper
 {
   private static final ImmutableSet<Vec3> RAYS;
+  private static double memX = 0D, memY = 0D, memZ = 0D;
+  private static float memPower;
+  private static long memTime = 0L;
+
   static
   {
     ImmutableSet.Builder<Vec3> builder = ImmutableSet.builder();
@@ -45,6 +49,29 @@ public class ExplosionHelper
             builder.add(new Vec3(dx / mag * 0.3f, dy / mag * 0.3f, dz / mag * 0.3f));
           }
     RAYS = builder.build();
+  }
+
+  public static void registerExplosion(ClientboundExplodePacket packet, ClientLevel level)
+  {
+    double x = packet.getX();
+    double y = packet.getY();
+    double z = packet.getZ();
+    float power = packet.getPower();
+    if(y == memY && x == memX && z == memZ && level.getGameTime() == memTime && power == memPower)
+      return;
+
+    Vec3 pos = new Vec3(x, y, z);
+    if(Renderers.EXPLOSIONS.config.on())
+      explosion(x, y, z);
+
+    if(Renderers.EXPLOSION_BLOCK_RAYS.config.on())
+      explosionBlockRays(pos, level, power);
+
+    if(Renderers.EXPLOSION_ENTITY_RAYS.config.on())
+      explosionEntityRays(x, y, z, level, power);
+
+    if(Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
+      explosionAffectedBlocks(pos, level, power);
   }
 
   public static Map<Vec3, Boolean> getExposurePoints(double sx, double sy, double sz, float power, Entity entity)

@@ -67,7 +67,7 @@ public class GuiConfigs extends EGuiConfigsBase
     int labelWidth = 0;
     for(IConfigBase config : tab.getOptions())
       labelWidth = Math.max(labelWidth, font.width(config.getName()));
-    return GuiUtils.getScaledWindowWidth() - labelWidth - 50;
+    return GuiUtils.getScaledWindowWidth() - labelWidth - 100;
   }
 
   @Override

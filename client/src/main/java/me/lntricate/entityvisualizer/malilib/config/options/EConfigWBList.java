@@ -2,16 +2,14 @@ package me.lntricate.entityvisualizer.malilib.config.options;
 
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 import com.google.common.collect.ImmutableList;
 
-import fi.dy.masa.malilib.gui.interfaces.IDialogHandler;
 import fi.dy.masa.malilib.gui.interfaces.IKeybindConfigGui;
 import fi.dy.masa.malilib.gui.widgets.WidgetListConfigOptionsBase;
 import fi.dy.masa.malilib.util.restrictions.UsageRestriction.ListType;
 import me.lntricate.entityvisualizer.malilib.config.IEConfigWidgetable;
 import me.lntricate.entityvisualizer.malilib.widgets.EWidgetConfigOption;
+import me.lntricate.entityvisualizer.malilib.widgets.ResetButton;
 
 public class EConfigWBList extends EConfigMulti
 {
@@ -43,7 +41,7 @@ public class EConfigWBList extends EConfigMulti
   }
 
   @Override
-  public void createWidgets(EWidgetConfigOption widgetConfigOption, WidgetListConfigOptionsBase<?, ?> parent, int x, int y, int w, int h, IKeybindConfigGui configGui, @Nullable IDialogHandler dialogHandler)
+  public void createWidgets(EWidgetConfigOption widgetConfigOption, WidgetListConfigOptionsBase<?, ?> parent, int x, int y, int w, int h, IKeybindConfigGui configGui, ResetButton resetButton)
   {
     this.widgetConfigOption = widgetConfigOption;
     switch((ListType)getConfig(0).getValue())
@@ -52,13 +50,13 @@ public class EConfigWBList extends EConfigMulti
         break;
       case WHITELIST:
         w /= 2;
-        ((IEConfigWidgetable)getConfig(1)).createWidgets(widgetConfigOption, parent, x + w, y, w, h, configGui, dialogHandler);
+        ((IEConfigWidgetable)getConfig(1)).createWidgets(widgetConfigOption, parent, x + w, y, w, h, configGui, resetButton);
         break;
       case BLACKLIST:
         w /= 2;
-        ((IEConfigWidgetable)getConfig(2)).createWidgets(widgetConfigOption, parent, x + w, y, w, h, configGui, dialogHandler);
+        ((IEConfigWidgetable)getConfig(2)).createWidgets(widgetConfigOption, parent, x + w, y, w, h, configGui, resetButton);
         break;
     }
-    ((IEConfigWidgetable)getConfig(0)).createWidgets(widgetConfigOption, parent, x, y, w, h, configGui, dialogHandler);
+    ((IEConfigWidgetable)getConfig(0)).createWidgets(widgetConfigOption, parent, x, y, w, h, configGui, resetButton);
   }
 }

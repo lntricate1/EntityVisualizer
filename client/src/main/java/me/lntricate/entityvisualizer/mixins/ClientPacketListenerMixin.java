@@ -3,13 +3,11 @@ package me.lntricate.entityvisualizer.mixins;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import me.lntricate.entityvisualizer.config.Configs.Renderers;
-import me.lntricate.entityvisualizer.helpers.EntityPositionHelper;
+import me.lntricate.entityvisualizer.helpers.EntityHelper;
 import me.lntricate.entityvisualizer.helpers.ExplosionHelper;
 import me.lntricate.entityvisualizer.network.ClientNetworkHandler;
 import me.lntricate.entityvisualizer.network.NetworkStuff;
@@ -20,17 +18,12 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
-import net.minecraft.world.phys.Vec3;
 
 @Mixin(ClientPacketListener.class)
 public class ClientPacketListenerMixin
 {
   @Shadow @Final private Minecraft minecraft;
   @Shadow private ClientLevel level;
-
-  @Unique private static double memX = 0D, memY = 0D, memZ = 0D;
-  @Unique private static float memPower;
-  @Unique private static long memTime = 0L;
 
   private final String mainThreadInjectionPoint = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/util/thread/BlockableEventLoop;)V";
 
@@ -47,37 +40,19 @@ public class ClientPacketListenerMixin
   @Inject(method = "handleExplosion", at = @At(value = "INVOKE", target = mainThreadInjectionPoint, shift = At.Shift.AFTER))
   private void onExplosion(ClientboundExplodePacket packet, CallbackInfo ci)
   {
-    double x = packet.getX();
-    double y = packet.getY();
-    double z = packet.getZ();
-    float power = packet.getPower();
-    if(y == memY && x == memX && z == memZ && level.getGameTime() == memTime && power == memPower)
-      return;
-
-    Vec3 pos = new Vec3(x, y, z);
-    if(Renderers.EXPLOSIONS.config.on())
-      ExplosionHelper.explosion(x, y, z);
-
-    if(Renderers.EXPLOSION_BLOCK_RAYS.config.on())
-      ExplosionHelper.explosionBlockRays(pos, level, power);
-
-    if(Renderers.EXPLOSION_ENTITY_RAYS.config.on())
-      ExplosionHelper.explosionEntityRays(x, y, z, level, power);
-
-    if(Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
-      ExplosionHelper.explosionAffectedBlocks(pos, level, power);
+    ExplosionHelper.registerExplosion(packet, level);
   }
 
   @Inject(method = "handleAddEntity", at = @At("TAIL"))
   private void onEntitySpawn(ClientboundAddEntityPacket packet, CallbackInfo ci)
   {
-    EntityPositionHelper.onEntitySpawn(level.getEntity(packet.getId()));
+    EntityHelper.registerAdd(level.getEntity(packet.getId()));
   }
 
   @Inject(method = "handleRemoveEntities", at = @At(value = "INVOKE", target = mainThreadInjectionPoint, shift = At.Shift.AFTER))
   private void onEntityKill(ClientboundRemoveEntitiesPacket packet, CallbackInfo ci)
   {
     for(int id : packet.getEntityIds())
-      EntityPositionHelper.onEntityDeath(id);
+      EntityHelper.registerDeath(id);
   }
 }

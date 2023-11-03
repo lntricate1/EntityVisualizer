@@ -2,7 +2,7 @@ package me.lntricate.entityvisualizer.network;
 
 import io.netty.buffer.Unpooled;
 import me.lntricate.entityvisualizer.config.Configs;
-import me.lntricate.entityvisualizer.helpers.EntityPositionHelper;
+import me.lntricate.entityvisualizer.helpers.EntityHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
@@ -12,6 +12,7 @@ import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 public class ClientNetworkHandler
 {
   private static Minecraft minecraft = Minecraft.getInstance();
+  public static boolean hasServer;
 
   public static void handleData(FriendlyByteBuf data, LocalPlayer player)
   {
@@ -20,9 +21,15 @@ public class ClientNetworkHandler
 
     int id = data.readVarInt();
     if(id == NetworkStuff.HI)
-      setPacketRecievingState(Configs.Renderers.requireEntityPackets());
+      onServerHi();
     if(id == NetworkStuff.DATA)
       handleEntityPacket(data);
+  }
+
+  private static void onServerHi()
+  {
+    setPacketRecievingState(Configs.Renderers.requireEntityPackets());
+    hasServer = true;
   }
 
   public static void setPacketRecievingState(boolean state)
@@ -33,7 +40,7 @@ public class ClientNetworkHandler
   private static void handleEntityPacket(FriendlyByteBuf data)
   {
     CompoundTag tag = data.readNbt();
-    EntityPositionHelper.onEntityMove(
+    EntityHelper.registerTick(
       tag.getInt("id"),
       tag.getBoolean("self"),
       tag.getDouble("x"), tag.getDouble("y"), tag.getDouble("z"),

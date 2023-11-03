@@ -10,7 +10,6 @@ import com.google.gson.JsonObject;
 import fi.dy.masa.malilib.config.ConfigType;
 import fi.dy.masa.malilib.config.options.ConfigBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
-import fi.dy.masa.malilib.gui.interfaces.IDialogHandler;
 import fi.dy.masa.malilib.gui.interfaces.IKeybindConfigGui;
 import fi.dy.masa.malilib.gui.widgets.WidgetListConfigOptionsBase;
 import me.lntricate.entityvisualizer.EntityVisualizerMod;
@@ -18,6 +17,7 @@ import me.lntricate.entityvisualizer.malilib.config.EConfigType;
 import me.lntricate.entityvisualizer.malilib.config.IEConfigValueGettable;
 import me.lntricate.entityvisualizer.malilib.config.IEConfigWidgetable;
 import me.lntricate.entityvisualizer.malilib.widgets.EWidgetConfigOption;
+import me.lntricate.entityvisualizer.malilib.widgets.ResetButton;
 
 public class EConfigMulti extends ConfigBase<EConfigMulti> implements IEConfigWidgetable
 {
@@ -112,13 +112,14 @@ public class EConfigMulti extends ConfigBase<EConfigMulti> implements IEConfigWi
   }
 
   @Override
-  public void createWidgets(EWidgetConfigOption widgetConfigOption, WidgetListConfigOptionsBase<?, ?> parent, int x, int y, int w, int h, IKeybindConfigGui configGui, @Nullable IDialogHandler dialogHandler)
+  public void createWidgets(EWidgetConfigOption widgetConfigOption, WidgetListConfigOptionsBase<?, ?> parent, int x, int y, int w, int h, IKeybindConfigGui configGui, ResetButton resetButton)
   {
+    this.resetButton = resetButton;
     this.widgetConfigOption = widgetConfigOption;
     w /= configs.size();
     for(IEConfigValueGettable<?> config : configs)
     {
-      ((IEConfigWidgetable)config).createWidgets(widgetConfigOption, parent, x, y, w, h, configGui, dialogHandler);
+      ((IEConfigWidgetable)config).createWidgets(widgetConfigOption, parent, x, y, w, h, configGui, resetButton);
       x += w;
     }
   }
@@ -129,21 +130,12 @@ public class EConfigMulti extends ConfigBase<EConfigMulti> implements IEConfigWi
   public void onValueChanged()
   {
     super.onValueChanged();
-    if(resetButton != null)
-      resetButton.setEnabled(isModified());
   }
 
   public void remakeWidgets()
   {
     if(widgetConfigOption != null)
       widgetConfigOption.remakeWidgets();
-  }
-
-  @Override
-  public void createResetButton(EWidgetConfigOption widgetConfigOption, int x, int y, int w, int h)
-  {
-    resetButton = widgetConfigOption.createResetButton(x, y, this);
-    widgetConfigOption.addWidgetPublic(resetButton);
   }
 
   @Override

@@ -6,6 +6,7 @@
   "mixins": [
     "AbstractArrowMixin",
     "EntityMixin",
+    "MinecraftMixin",
     "PlayerListMixin",
     "ServerGamePacketListenerImplMixin",
     "ThrowableProjectileMixin"

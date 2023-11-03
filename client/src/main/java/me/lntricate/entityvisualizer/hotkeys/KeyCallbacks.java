@@ -53,7 +53,7 @@ public class KeyCallbacks
         Map<Triple<String, Vec3, Vec3>, Integer> data = new HashMap<>();
         for(Entity e : entities)
         {
-          Triple<String, Vec3, Vec3> triple = Triple.of(e.getType().toShortString(), EntityHelper.pos(e), e.getDeltaMovement());
+          Triple<String, Vec3, Vec3> triple = Triple.of(e.getType().toShortString(), EntityHelper.pos(e), EntityHelper.vel(e));
           data.put(triple, data.getOrDefault(triple, 0) + 1);
         }
 

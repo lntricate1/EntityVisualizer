@@ -22,6 +22,7 @@ public class EntityHelper
   public static record Pos(double x, double y, double z){};
   private static final Minecraft mc = Minecraft.getInstance();
   private static final Map<Integer, Vec3> prevPos = new HashMap<>();
+  private static final Map<Integer, Vec3> prevVel = new HashMap<>();
   private static final Map<Integer, EntityData> datas = new HashMap<>();
   private static final Set<Vec3> memPos = new HashSet<>();
   private static long memTick = 0L;
@@ -40,6 +41,12 @@ public class EntityHelper
   {
     int id = entity.getId();
     return prevPos.containsKey(id) ? prevPos.get(id) : entity.position();
+  }
+
+  public static Vec3 vel(Entity entity)
+  {
+    int id = entity.getId();
+    return prevVel.containsKey(id) ? prevPos.get(id) : entity.getDeltaMovement();
   }
 
   public static EntityData data(int id)
@@ -73,6 +80,7 @@ public class EntityHelper
     int id = entity.getId();
     Vec3 pos = entity.position();
     prevPos.put(id, pos);
+    prevVel.put(id, entity.getDeltaMovement());
     EntityType<?> type = entity.getType();
     EntityData data = new EntityData(type.toShortString(), type.getWidth(), type.getHeight());
     datas.put(id, data);
@@ -116,12 +124,14 @@ public class EntityHelper
 
     memPos.add(pos);
     prevPos.put(id, pos);
+    prevVel.put(id, new Vec3(mx, my, mz));
   }
 
   public static void registerDeath(int id)
   {
     Vec3 pos = pos(id);
     prevPos.remove(id);
+    prevVel.remove(id);
     if(pos == null || memPos.contains(pos))
     {
       datas.remove(id);

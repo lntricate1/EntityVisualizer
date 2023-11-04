@@ -21,7 +21,7 @@ public class FormatUtil
     return new Variable<T>(key, defaultFormat, value);
   }
 
-  public static MutableComponent format(EConfigString config, Variable<?>... vars)
+  public static String preFormat(EConfigString config, Variable<?>... vars)
   {
     try
     {
@@ -59,7 +59,19 @@ public class FormatUtil
         .replace("\0", "%");
       text = String.format(text, values);
 
-      return Component.Serializer.fromJsonLenient(text.replace("§", "%"));
+      return text.replace("§", "%");
+    }
+    catch(Exception e)
+    {
+      return "\"Format Error\"";
+    }
+  }
+
+  public static MutableComponent format(EConfigString config, Variable<?>... vars)
+  {
+    try
+    {
+      return Component.Serializer.fromJsonLenient(preFormat(config, vars));
     }
     catch(Exception e)
     {

@@ -127,6 +127,12 @@ public class EntityHelper
     prevVel.put(id, new Vec3(mx, my, mz));
   }
 
+  public static void registerTick(int id, Vec3 pos, Vec3 vel)
+  {
+    prevPos.put(id, pos);
+    prevVel.put(id, vel);
+  }
+
   public static void registerDeath(int id)
   {
     Vec3 pos = pos(id);

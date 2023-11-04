@@ -5,10 +5,13 @@ import java.util.Set;
 
 import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.phys.Vec3;
 
 public class ServerNetworkHandler
@@ -27,6 +30,10 @@ public class ServerNetworkHandler
         break;
       case NetworkStuff.BYE:
         players.remove(player);
+        break;
+      case NetworkStuff.DATA:
+        CompoundTag tag = data.readNbt();
+        sendRequestedEntities(player, tag.getIntArray("ids"));
         break;
     }
   }
@@ -57,6 +64,7 @@ public class ServerNetworkHandler
       return;
 
     CompoundTag tag = new CompoundTag();
+    tag.putInt("ID", 0);
     tag.putInt("id", id);
     tag.putDouble("x", pos.x);
     tag.putDouble("y", pos.y);
@@ -76,5 +84,43 @@ public class ServerNetworkHandler
     for(ServerPlayer player : players)
       if(player.level == level && player.position().distanceToSqr(pos) < 16384)
         player.connection.send(packet);
+  }
+
+  public static void sendRequestedEntities(ServerPlayer player, int[] ids)
+  {
+    long[] x = new long[ids.length];
+    long[] y = new long[ids.length];
+    long[] z = new long[ids.length];
+    long[] mx = new long[ids.length];
+    long[] my = new long[ids.length];
+    long[] mz = new long[ids.length];
+    int[] fuse = new int[ids.length];
+    for(int i = 0; i < ids.length; ++i)
+    {
+      Entity entity = player.level.getEntity(ids[i]);
+      Vec3 m = entity.getDeltaMovement();
+      x[i] = Double.doubleToLongBits(entity.getX());
+      y[i] = Double.doubleToLongBits(entity.getY());
+      z[i] = Double.doubleToLongBits(entity.getZ());
+      mx[i] = Double.doubleToLongBits(m.x);
+      my[i] = Double.doubleToLongBits(m.y);
+      mz[i] = Double.doubleToLongBits(m.z);
+      fuse[i] = entity instanceof PrimedTnt tnt ? tnt.getFuse() : -1;
+    }
+    CompoundTag tag = new CompoundTag();
+    tag.putInt("ID", 1);
+    tag.putIntArray("ids", ids);
+    tag.putLongArray("x", x);
+    tag.putLongArray("y", y);
+    tag.putLongArray("z", z);
+    tag.putLongArray("mx", mx);
+    tag.putLongArray("my", my);
+    tag.putLongArray("mz", mz);
+    tag.putIntArray("fuse", fuse);
+    FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
+    packetBuf.writeVarInt(NetworkStuff.DATA);
+    packetBuf.writeNbt(tag);
+    ClientboundCustomPayloadPacket packet = new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, packetBuf);
+    player.connection.send(packet);
   }
 }

@@ -1,1 +1,1 @@
-/home/intricate/dev/EntityVisualizer/client/src/main/java/me/lntricate/entityvisualizer/network/ServerNetworkHandler.java
+../../../../../../../../client/src/main/java/me/lntricate/entityvisualizer/network/ServerNetworkHandler.java

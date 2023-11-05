@@ -1,6 +1,6 @@
 package me.lntricate.entityvisualizer.malilib.config.options;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import fi.dy.masa.malilib.config.options.ConfigString;
 import fi.dy.masa.malilib.gui.interfaces.IKeybindConfigGui;

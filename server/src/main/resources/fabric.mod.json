@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "${name}",
-  "description": "",
+  "description": "Tools for visualizing entities and explosions",
   "authors": [
     "lntricate"
   ],
@@ -16,6 +16,15 @@
 
   "environment": "*",
   "entrypoints": {
+    "main": [
+      "me.lntricate.entityvisualizer.EntityVisualizerMod"
+    ],
+    "preLaunch": [
+      "me.lntricate.entityvisualizer.PreLaunch"
+    ],
+    "modmenu": [
+      "me.lntricate.entityvisualizer.ModMenuImpl"
+    ]
   },
   "mixins": [
     "entityvisualizer.mixins.json"

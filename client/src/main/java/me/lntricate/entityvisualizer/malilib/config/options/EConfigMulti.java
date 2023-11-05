@@ -2,7 +2,7 @@ package me.lntricate.entityvisualizer.malilib.config.options;
 
 import java.util.List;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

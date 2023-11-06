@@ -77,7 +77,8 @@ public class ExplosionHelper
   public static Map<Vec3, Boolean> getExposurePoints(double sx, double sy, double sz, float power, Entity entity)
   {
     Map<Vec3, Boolean> points = new HashMap<>();
-    if(entity.distanceToSqr(sx, sy, sz) > power*power)
+    double maxdist = power*2 + 0.1;
+    if(entity.position().distanceToSqr(sx, sy, sz) > maxdist*maxdist)
       return points;
 
     Vec3 pos = new Vec3(sx, sy, sz);

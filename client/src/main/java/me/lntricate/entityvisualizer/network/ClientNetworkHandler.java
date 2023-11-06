@@ -10,6 +10,7 @@ import io.netty.buffer.Unpooled;
 import me.lntricate.entityvisualizer.FormatUtil;
 import me.lntricate.entityvisualizer.config.Configs;
 import me.lntricate.entityvisualizer.helpers.EntityHelper;
+import me.lntricate.entityvisualizer.malilib.config.options.EConfigString;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
@@ -104,17 +105,16 @@ public class ClientNetworkHandler
       DecimalFormat df = new DecimalFormat("0");
       df.setMaximumFractionDigits(340);
       df.setMinimumFractionDigits(1);
-      String fuseString = f == -1 ? "\"\"" : FormatUtil.preFormat(Configs.Generic.ENTITY_DATA_FUSE_FORMAT, var("fuse", "d", f));
-      mc.gui.handleChat(ChatType.SYSTEM, FormatUtil.format(Configs.Generic.ENTITY_DATA_FORMAT,
-        var("name", "s", name),
+      EConfigString format = f == -1 ? Configs.Generic.ENTITY_DATA_FORMAT : Configs.Generic.ENTITY_DATA_TNT_FORMAT;
+      FormatUtil.Variable var = f == -1 ? var("name", "s", name) : var("fuse", "s", f);
+      mc.gui.handleChat(ChatType.SYSTEM, FormatUtil.format(format, var,
         var("count", "d", entry.getValue()),
         var("x", "s", df.format(p.x)),
         var("y", "s", df.format(p.y)),
         var("z", "s", df.format(p.z)),
         var("mx", "s", df.format(m.x)),
         var("my", "s", df.format(m.y)),
-        var("mz", "s", df.format(m.z)),
-        var("fuse", "s", fuseString)), mc.player.getUUID());
+        var("mz", "s", df.format(m.z))), mc.player.getUUID());
     }
   }
 }

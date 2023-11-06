@@ -6,10 +6,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.lntricate.entityvisualizer.network.ServerNetworkHandler;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.Connection;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 
+@Environment(EnvType.SERVER)
 @Mixin(PlayerList.class)
 public class PlayerListMixin
 {

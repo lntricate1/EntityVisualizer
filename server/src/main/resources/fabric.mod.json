@@ -15,17 +15,7 @@
   "icon": "assets/entityvisualizer/icon.png",
 
   "environment": "*",
-  "entrypoints": {
-    "main": [
-      "me.lntricate.entityvisualizer.EntityVisualizerMod"
-    ],
-    "preLaunch": [
-      "me.lntricate.entityvisualizer.PreLaunch"
-    ],
-    "modmenu": [
-      "me.lntricate.entityvisualizer.ModMenuImpl"
-    ]
-  },
+  "entrypoints": {},
   "mixins": [
     "entityvisualizer.mixins.json"
   ],

@@ -7,7 +7,7 @@
     "ClientPacketListenerMixin",
     "MinecraftMixin"
   ],
-  "mixins": [
+  "server": [
     "AbstractArrowMixin",
     "EntityMixin",
     "PlayerListMixin",

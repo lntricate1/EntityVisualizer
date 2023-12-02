@@ -9,8 +9,13 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+//#if MC >= 11900
+//$$ import org.joml.Matrix4f;
+//$$ import org.joml.Vector3f;
+//#else
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
+//#endif
 
 import fi.dy.masa.malilib.interfaces.IClientTickHandler;
 import fi.dy.masa.malilib.interfaces.IRenderer;

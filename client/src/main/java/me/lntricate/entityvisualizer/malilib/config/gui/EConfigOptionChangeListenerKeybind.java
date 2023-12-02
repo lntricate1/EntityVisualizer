@@ -27,8 +27,14 @@ public class EConfigOptionChangeListenerKeybind extends ConfigOptionChangeListen
   public void actionPerformedWithButton(ButtonBase button, int mouseButton)
   {
     keybind.resetToDefault();
-    resetButton.update();
-    buttonHotkey.updateDisplayString();
+    updateButtons();
     host.getButtonPressListener().actionPerformedWithButton(button, mouseButton);
+  }
+
+  @Override
+  public void updateButtons()
+  {
+    buttonHotkey.updateDisplayString();
+    resetButton.update();
   }
 }

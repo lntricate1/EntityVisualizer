@@ -37,7 +37,7 @@ dependencies {
   annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
   include "com.github.LlamaLad7:MixinExtras:0.1.1"
   // Malilib
-  modImplementation("fi.dy.masa.malilib:${project.malilib_version}") {
+  modImplementation("fi.dy.masa.malilib:malilib-fabric-${project.malilib_version}") {
     exclude group: 'io.github.prospector', module: 'modmenu'
   }
   // Mod menu

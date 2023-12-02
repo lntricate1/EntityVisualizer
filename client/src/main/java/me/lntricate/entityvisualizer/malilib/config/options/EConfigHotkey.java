@@ -63,7 +63,11 @@ public class EConfigHotkey extends ConfigHotkey implements IEConfigValueGettable
 
     button.setActionListener(configGui.getButtonPressListener());
     EConfigOptionChangeListenerKeybind listener = new EConfigOptionChangeListenerKeybind(getKeybind(), button, resetButton, configGui);
+    //#if MC >= 11800
+    //$$ configGui.addKeybindChangeListener(listener::updateButtons);
+    //#else
     configGui.addKeybindChangeListener(listener);
+    //#endif
 
     widgetConfigOption.addWidgetPublic(button);
     widgetConfigOption.addWidgetPublic(new WidgetKeybindSettings(x + w + 2, y, h, h, getKeybind(), getName(), parent, configGui.getDialogHandler()));

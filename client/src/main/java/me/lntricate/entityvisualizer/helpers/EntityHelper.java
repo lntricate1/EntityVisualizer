@@ -115,7 +115,7 @@ public class EntityHelper
       if(Lists.ENTITY_TRAJECTORY.shouldRender(data.type))
       {
         Vec3 prev = prevPos.get(id);
-        trajectory(x, y, z, prev.x, prev.y, prev.z, self, xFirst, noCollide);
+        trajectory(prev.x, prev.y, prev.z, x, y, z, self, xFirst, noCollide);
       }
 
     if(Renderers.ENTITY_VELOCITY.config.on())

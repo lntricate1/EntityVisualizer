@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -14,6 +15,7 @@ import fi.dy.masa.malilib.util.Color4f;
 import me.lntricate.entityvisualizer.config.Configs;
 import me.lntricate.entityvisualizer.config.Configs.Renderers;
 import me.lntricate.entityvisualizer.event.RenderHandler;
+import me.lntricate.entityvisualizer.malilib.config.options.EConfigRenderer;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
@@ -33,6 +35,7 @@ public class ExplosionHelper
   private static double memX = 0D, memY = 0D, memZ = 0D;
   private static float memPower;
   private static long memTime = 0L;
+  private static int memCount = 0;
 
   static
   {
@@ -57,8 +60,17 @@ public class ExplosionHelper
     double y = packet.getY();
     double z = packet.getZ();
     float power = packet.getPower();
-    if(y == memY && x == memX && z == memZ && level.getGameTime() == memTime && power == memPower)
-      return;
+    long time = level.getGameTime();
+    if(time == memTime)
+    {
+      int limit = Configs.Generic.EXPLOSION_LIMIT.getIntegerValue();
+      if((limit != -1 && memCount > limit) || y == memY && x == memX && z == memZ && power == memPower)
+        return;
+    }
+    else
+      memCount = 0;
+
+    memX = x; memY = y; memZ = z; memTime = time; memPower = power; memCount ++;
 
     Vec3 pos = new Vec3(x, y, z);
     if(Renderers.EXPLOSIONS.config.on())
@@ -77,7 +89,7 @@ public class ExplosionHelper
   public static Map<Vec3, Boolean> getExposurePoints(double sx, double sy, double sz, float power, Entity entity)
   {
     Map<Vec3, Boolean> points = new HashMap<>();
-    double maxdist = power*2 + 0.1;
+    double maxdist = power*2;
     if(entity.position().distanceToSqr(sx, sy, sz) > maxdist*maxdist)
       return points;
 
@@ -106,19 +118,50 @@ public class ExplosionHelper
   {
     Set<BlockPos> outMin = new HashSet<>();
     Set<BlockPos> outMax = new HashSet<>();
+    float rayStrengthMinStart = power * 0.7f;
+    float rayStrengthMaxStart = power * 1.3f;
+
+    //#if MC >= 11904
+    //$$ BlockPos pos = BlockPos.containing(startPos);
+    //#else
+    BlockPos pos = new BlockPos(startPos);
+    //#endif
+    BlockState blockState = level.getBlockState(pos);
+    FluidState fluidState = level.getFluidState(pos);
+    Block block = blockState.getBlock();
+    if(!blockState.isAir() || !fluidState.isEmpty())
+    {
+      float blastRes = (Math.max(block.getExplosionResistance(), fluidState.getExplosionResistance()) + 0.3F) * 0.3F;
+      rayStrengthMinStart -= blastRes;
+      rayStrengthMaxStart -= blastRes;
+    }
+    if(rayStrengthMaxStart > 0F && Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(block))
+    {
+      if(rayStrengthMinStart > 0F)
+        outMin.add(pos);
+      else
+        outMax.add(pos);
+    }
+    rayStrengthMinStart -= 0.22500001F;
+    rayStrengthMaxStart -= 0.22500001F;
+
     for(Vec3 ray : RAYS)
     {
       Vec3 rayPos = startPos.add(ray);
-      for(float rayStrengthMin = power * 0.7F, rayStrengthMax = power * 1.3F;
+      for(float rayStrengthMin = rayStrengthMinStart, rayStrengthMax = rayStrengthMaxStart;
         rayStrengthMax > 0F; rayStrengthMin -= 0.22500001F, rayStrengthMax -= 0.22500001F, rayPos = rayPos.add(ray))
       {
-        BlockPos pos = new BlockPos(rayPos);
+        //#if MC >= 11904
+        //$$ pos = BlockPos.containing(rayPos);
+        //#else
+        pos = new BlockPos(rayPos);
+        //#endif
         if(!level.isInWorldBounds(pos))
           break;
 
-        BlockState blockState = level.getBlockState(pos);
-        FluidState fluidState = level.getFluidState(pos);
-        Block block = blockState.getBlock();
+        blockState = level.getBlockState(pos);
+        fluidState = level.getFluidState(pos);
+        block = blockState.getBlock();
         if(!blockState.isAir() || !fluidState.isEmpty())
         {
           float blastRes = (Math.max(block.getExplosionResistance(), fluidState.getExplosionResistance()) + 0.3F) * 0.3F;
@@ -126,7 +169,7 @@ public class ExplosionHelper
           rayStrengthMax -= blastRes;
         }
 
-        if(rayStrengthMax <= 0F || outMin.contains(pos) || !Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(block))
+        if(outMin.contains(pos) || !Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(block) || rayStrengthMax <= 0F)
           continue;
 
         if(rayStrengthMin > 0F)
@@ -139,23 +182,56 @@ public class ExplosionHelper
     return Pair.of(outMin, outMax);
   }
 
-  public static Pair<Set<Vec3>, Set<Vec3>> getBlockPoints(Vec3 startPos, float power, ClientLevel level)
+  public static Triple<Set<Vec3>, Set<Vec3>, Set<Vec3>> getBlockPoints(Vec3 startPos, float power, ClientLevel level)
   {
     Set<Vec3> outMin = new HashSet<>();
     Set<Vec3> outMax = new HashSet<>();
+    Set<Vec3> outRays = new HashSet<>();
+    float rayStrengthMinStart = power * 0.7f;
+    float rayStrengthMaxStart = power * 1.3f;
+
+    //#if MC >= 11904
+    //$$ BlockPos pos = BlockPos.containing(startPos);
+    //#else
+    BlockPos pos = new BlockPos(startPos);
+    //#endif
+    BlockState blockState = level.getBlockState(pos);
+    FluidState fluidState = level.getFluidState(pos);
+    Block block = blockState.getBlock();
+    if(!blockState.isAir() || !fluidState.isEmpty())
+    {
+      float blastRes = (Math.max(block.getExplosionResistance(), fluidState.getExplosionResistance()) + 0.3F) * 0.3F;
+      rayStrengthMinStart -= blastRes;
+      rayStrengthMaxStart -= blastRes;
+    }
+    if(rayStrengthMaxStart > 0F && Configs.Lists.EXPLOSION_BLOCK_RAYS.shouldRender(block))
+    {
+      if(rayStrengthMinStart > 0F)
+        outMin.add(startPos);
+      else
+        outMax.add(startPos);
+    }
+    rayStrengthMinStart -= 0.22500001F;
+    rayStrengthMaxStart -= 0.22500001F;
+
     for(Vec3 ray : RAYS)
     {
+      Vec3 prev = startPos;
       Vec3 rayPos = startPos.add(ray);
-      float rayStrengthMin = power * 0.7F;
-      float rayStrengthMax = power * 1.3F;
-      for(; rayStrengthMax > 0F; rayStrengthMin -= 0.22500001F, rayStrengthMax -= 0.22500001F, rayPos = rayPos.add(ray))
+      boolean hasPos = false;
+      for(float rayStrengthMin = rayStrengthMinStart, rayStrengthMax = rayStrengthMaxStart;
+        rayStrengthMax > 0F; rayStrengthMin -= 0.22500001F, rayStrengthMax -= 0.22500001F, rayPos = rayPos.add(ray))
       {
-        BlockPos pos = new BlockPos(rayPos);
+        //#if MC >= 11904
+        //$$ pos = BlockPos.containing(rayPos);
+        //#else
+        pos = new BlockPos(rayPos);
+        //#endif
         if(!level.isInWorldBounds(pos))
           break;
-        BlockState blockState = level.getBlockState(pos);
-        FluidState fluidState = level.getFluidState(pos);
-        Block block = blockState.getBlock();
+        blockState = level.getBlockState(pos);
+        fluidState = level.getFluidState(pos);
+        block = blockState.getBlock();
         if(!blockState.isAir() || !fluidState.isEmpty())
         {
           float blastRes = (Math.max(block.getExplosionResistance(), fluidState.getExplosionResistance()) + 0.3F) * 0.3F;
@@ -163,16 +239,20 @@ public class ExplosionHelper
           rayStrengthMax -= blastRes;
         }
 
-        if(rayStrengthMax <= 0F || !Configs.Lists.EXPLOSION_BLOCK_RAYS.shouldRender(block))
+        if(!Configs.Lists.EXPLOSION_BLOCK_RAYS.shouldRender(block) || rayStrengthMax <= 0F)
           continue;
 
         if(rayStrengthMin > 0F)
           outMin.add(rayPos);
         else
           outMax.add(rayPos);
+        prev = rayPos;
+        hasPos = true;
       }
+      if(hasPos)
+        outRays.add(prev);
     }
-    return Pair.of(outMin, outMax);
+    return Triple.of(outMin, outMax, outRays);
   }
 
   public static void explosion(double x, double y, double z)
@@ -200,11 +280,17 @@ public class ExplosionHelper
 
   public static void explosionBlockRays(Vec3 pos, ClientLevel level, float power)
   {
-    Pair<Set<Vec3>, Set<Vec3>> points = getBlockPoints(pos, power, level);
-    for(Vec3 min : points.getLeft())
-      RenderHandler.addPoint(min.x, min.y, min.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color1(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
-    for(Vec3 max : points.getRight())
-      RenderHandler.addPoint(max.x, max.y, max.z, Renderers.EXPLOSION_BLOCK_RAYS.config.color2(), Renderers.EXPLOSION_BLOCK_RAYS.config.dur());
+    Triple<Set<Vec3>, Set<Vec3>, Set<Vec3>> points = getBlockPoints(pos, power, level);
+    EConfigRenderer config = Renderers.EXPLOSION_BLOCK_RAYS.config;
+    if(config.color1().a > 0)
+      for(Vec3 min : points.getLeft())
+        RenderHandler.addPoint(min.x, min.y, min.z, config.color1(), config.dur());
+    if(config.color2().a > 0)
+      for(Vec3 max : points.getMiddle())
+        RenderHandler.addPoint(max.x, max.y, max.z, config.color2(), config.dur());
+    if(config.color3().a > 0)
+      for(Vec3 ray : points.getRight())
+        RenderHandler.addLine(ray.x, ray.y, ray.z, pos.x, pos.y, pos.z, config.color3(), config.dur());
   }
 
   public static void explosionAffectedBlocks(Vec3 pos, ClientLevel level, float power)

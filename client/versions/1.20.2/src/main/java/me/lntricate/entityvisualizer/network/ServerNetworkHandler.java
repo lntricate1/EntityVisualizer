@@ -3,10 +3,9 @@ package me.lntricate.entityvisualizer.network;
 import java.util.HashSet;
 import java.util.Set;
 
-import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -22,24 +21,27 @@ public class ServerNetworkHandler
     if(data == null)
       return;
 
-    switch(data.readVarInt())
+    CompoundTag tag = data.readNbt();
+
+    switch(tag.getString("ID"))
     {
-      case NetworkStuff.HI:
+      case "hi":
         players.add(player);
         break;
-      case NetworkStuff.BYE:
+      case "bye":
         players.remove(player);
         break;
-      case NetworkStuff.DATA:
-        CompoundTag tag = data.readNbt();
-        sendRequestedEntities(player, tag.getIntArray("ids"));
+      case "requestEntities":
+        handleRequestEntitiesPacket(player, tag.getIntArray("ids"));
         break;
     }
   }
 
   public static void onPlayerJoin(ServerPlayer player)
   {
-    player.connection.send(new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(NetworkStuff.HI)));
+    CompoundTag tag = new CompoundTag();
+    tag.putString("ID", "hi");
+    player.connection.send(NetworkStuff.clientbound(tag));
   }
 
   public static void onPlayerLeave(ServerPlayer player)
@@ -54,7 +56,7 @@ public class ServerNetworkHandler
 
     boolean shouldExit = true;
     for(ServerPlayer player : players)
-      if(player.level == level && player.position().distanceToSqr(pos) < 16384)
+      if(player.level() == level && player.position().distanceToSqr(pos) < 16384)
       {
         shouldExit = false;
         break;
@@ -75,17 +77,14 @@ public class ServerNetworkHandler
     tag.putBoolean("xFirst", xFirst);
     tag.putBoolean("coll", coll);
 
-    FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
-    packetBuf.writeVarInt(NetworkStuff.DATA);
-    packetBuf.writeNbt(tag);
-    ClientboundCustomPayloadPacket packet = new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, packetBuf);
+    ClientboundCustomPayloadPacket packet = NetworkStuff.clientbound(tag);
 
     for(ServerPlayer player : players)
-      if(player.level == level && player.position().distanceToSqr(pos) < 16384)
+      if(player.level() == level && player.position().distanceToSqr(pos) < 16384)
         player.connection.send(packet);
   }
 
-  public static void sendRequestedEntities(ServerPlayer player, int[] ids)
+  public static void handleRequestEntitiesPacket(ServerPlayer player, int[] ids)
   {
     long[] x = new long[ids.length];
     long[] y = new long[ids.length];
@@ -96,7 +95,7 @@ public class ServerNetworkHandler
     int[] fuse = new int[ids.length];
     for(int i = 0; i < ids.length; ++i)
     {
-      Entity entity = player.level.getEntity(ids[i]);
+      Entity entity = player.level().getEntity(ids[i]);
       Vec3 m = entity.getDeltaMovement();
       x[i] = Double.doubleToLongBits(entity.getX());
       y[i] = Double.doubleToLongBits(entity.getY());
@@ -116,10 +115,6 @@ public class ServerNetworkHandler
     tag.putLongArray("my", my);
     tag.putLongArray("mz", mz);
     tag.putIntArray("fuse", fuse);
-    FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
-    packetBuf.writeVarInt(NetworkStuff.DATA);
-    packetBuf.writeNbt(tag);
-    ClientboundCustomPayloadPacket packet = new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, packetBuf);
-    player.connection.send(packet);
+    player.connection.send(NetworkStuff.clientbound(tag));
   }
 }

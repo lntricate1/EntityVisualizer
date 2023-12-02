@@ -7,7 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.config.gui.ButtonPressDirtyListenerSimple;
+//#if MC < 11800
 import fi.dy.masa.malilib.config.gui.ConfigOptionChangeListenerKeybind;
+//#endif
 import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.GuiConfigsBase.ConfigOptionWrapper;
@@ -24,7 +26,11 @@ import net.minecraft.client.gui.screens.Screen;
 
 public abstract class EGuiConfigsBase extends EGuiListBase<ConfigOptionWrapper, EWidgetConfigOption, EWidgetListConfigOptions> implements IKeybindConfigGui
 {
+  //#if MC >= 11800
+  //$$ protected final List<Runnable> hotkeyChangeListeners = new ArrayList<>();
+  //#else
   protected final List<ConfigOptionChangeListenerKeybind> hotkeyChangeListeners = new ArrayList<>();
+  //#endif
   protected final ButtonPressDirtyListenerSimple dirtyListener = new ButtonPressDirtyListenerSimple();
   protected final String modId;
   protected final List<String> initialConfigValues = new ArrayList<>();
@@ -110,9 +116,14 @@ public abstract class EGuiConfigsBase extends EGuiListBase<ConfigOptionWrapper, 
   protected EWidgetListConfigOptions createListWidget(int listX, int listY)
   {
     return new EWidgetListConfigOptions(listX, listY,
+    //#if MC >= 11904
+    //$$ this.getBrowserWidth(), this.getBrowserHeight(), this.getConfigWidth(), 0F, this.useKeybindSearch(), this);
+    //#else
       this.getBrowserWidth(), this.getBrowserHeight(), this.getConfigWidth(), this.getBlitOffset(), this.useKeybindSearch(), this);
+    //#endif
   }
 
+  //#if MC < 11900
   @Override
   public void initGui()
   {
@@ -120,6 +131,7 @@ public abstract class EGuiConfigsBase extends EGuiListBase<ConfigOptionWrapper, 
 
     minecraft.keyboardHandler.setSendRepeatsToGui(true);
   }
+  //#endif
 
   @Override
   public void removed()
@@ -131,7 +143,9 @@ public abstract class EGuiConfigsBase extends EGuiListBase<ConfigOptionWrapper, 
       this.getListWidget().clearConfigsModifiedFlag();
     }
 
+    //#if MC < 11900
     minecraft.keyboardHandler.setSendRepeatsToGui(false);
+    //#endif
   }
 
   protected void onSettingsChanged()
@@ -205,7 +219,11 @@ public abstract class EGuiConfigsBase extends EGuiListBase<ConfigOptionWrapper, 
   }
 
   @Override
+  //#if MC >= 11800
+  //$$ public void addKeybindChangeListener(Runnable listener)
+  //#else
   public void addKeybindChangeListener(ConfigOptionChangeListenerKeybind listener)
+  //#endif
   {
     this.hotkeyChangeListeners.add(listener);
   }
@@ -233,7 +251,12 @@ public abstract class EGuiConfigsBase extends EGuiListBase<ConfigOptionWrapper, 
 
   protected void updateKeybindButtons()
   {
-    for (ConfigOptionChangeListenerKeybind listener : this.hotkeyChangeListeners)
+    //#if MC >= 11800
+    //$$ for (Runnable listener : hotkeyChangeListeners)
+    //$$   listener.run();
+    //#else
+    for (ConfigOptionChangeListenerKeybind listener : hotkeyChangeListeners)
       listener.updateButtons();
+    //#endif
   }
 }

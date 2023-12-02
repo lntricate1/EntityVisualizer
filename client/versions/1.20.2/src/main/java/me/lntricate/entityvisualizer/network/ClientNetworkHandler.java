@@ -4,7 +4,6 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.netty.buffer.Unpooled;
 import me.lntricate.entityvisualizer.FormatUtil;
 import me.lntricate.entityvisualizer.config.Configs;
 import me.lntricate.entityvisualizer.helpers.EntityHelper;
@@ -13,8 +12,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.ChatType;
-import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraft.world.phys.Vec3;
 
 import static me.lntricate.entityvisualizer.FormatUtil.var;
@@ -29,21 +26,12 @@ public class ClientNetworkHandler
     if(data == null)
       return;
 
-    int id = data.readVarInt();
-    if(id == NetworkStuff.HI)
-      onServerHi();
-    if(id == NetworkStuff.DATA)
+    CompoundTag tag = data.readNbt();
+    switch(tag.getString("ID"))
     {
-      CompoundTag tag = data.readNbt();
-      switch(tag.getInt("ID"))
-      {
-        case 0:
-          handleEntityPacket(tag);
-          break;
-        case 1:
-          handleEntitiesRequestPacket(tag);
-          break;
-      }
+      case "hi" -> onServerHi();
+      case "tick" -> handleTickPacket(tag);
+      case "requestEntities" -> handleRequestEntitiesPacket(tag);
     }
   }
 
@@ -55,10 +43,12 @@ public class ClientNetworkHandler
 
   public static void setPacketRecievingState(boolean state)
   {
-    mc.player.connection.send(new ServerboundCustomPayloadPacket(NetworkStuff.CHANNEL, (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(state ? NetworkStuff.HI : NetworkStuff.BYE)));
+    CompoundTag tag = new CompoundTag();
+    tag.putString("ID", state ? "hi" : "bye");
+    mc.player.connection.send(NetworkStuff.serverbound(tag));
   }
 
-  private static void handleEntityPacket(CompoundTag tag)
+  private static void handleTickPacket(CompoundTag tag)
   {
     EntityHelper.registerTick(
       tag.getInt("id"),
@@ -71,7 +61,7 @@ public class ClientNetworkHandler
 
   private static record Data(String name, Vec3 pos, Vec3 vel, int fuse){};
 
-  private static void handleEntitiesRequestPacket(CompoundTag tag)
+  private static void handleRequestEntitiesPacket(CompoundTag tag)
   {
     int[] ids = tag.getIntArray("ids");
     long[] x = tag.getLongArray("x");
@@ -104,22 +94,14 @@ public class ClientNetworkHandler
       df.setMinimumFractionDigits(1);
       EConfigString format = f == -1 ? Configs.Generic.ENTITY_DATA_FORMAT : Configs.Generic.ENTITY_DATA_TNT_FORMAT;
       FormatUtil.Variable<?> var = f == -1 ? var("name", "s", name) : var("fuse", "s", f);
-      //#if MC >= 11900
-      //$$ mc.gui.getChat().addMessage(FormatUtil.format(format, var,
-      //#else
-      mc.gui.handleChat(ChatType.SYSTEM, FormatUtil.format(format, var,
-      //#endif
+      mc.gui.getChat().addMessage(FormatUtil.format(format, var,
         var("count", "d", entry.getValue()),
         var("x", "s", df.format(p.x)),
         var("y", "s", df.format(p.y)),
         var("z", "s", df.format(p.z)),
         var("mx", "s", df.format(m.x)),
         var("my", "s", df.format(m.y)),
-        var("mz", "s", df.format(m.z)))
-      //#if MC < 11900
-        , mc.player.getUUID()
-      //#endif
-        );
+        var("mz", "s", df.format(m.z))));
     }
   }
 }

@@ -75,7 +75,11 @@ public class FormatUtil
     }
     catch(Exception e)
     {
+      //#if MC >= 11900
+      //$$ return Component.literal("Failed to format - Invalid JSON");
+      //#else
       return new TextComponent("Failed to format - Invalid JSON");
+      //#endif
     }
   }
 }

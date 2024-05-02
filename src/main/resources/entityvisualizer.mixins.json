@@ -1,0 +1,23 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.lntricate.entityvisualizer.mixins",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "ClientPacketListenerMixin"
+  ],
+  "mixins": [
+    "carpet.OptimizedExplosionMixin",
+    "AbstractArrowMixin",
+    "EntityMixin",
+    "ExplosionMixin",
+    "PlayerListMixin",
+    "PrimedTntMixin",
+    "ServerGamePacketListenerImplMixin",
+    "ServerLevelMixin",
+    "ThrowableProjectileMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -134,7 +134,7 @@ public class ClientNetworkHandler
       ClientExplosionHelper.explosionEntityRays(mc.level, px, py, pz, id.getString(i), Double.longBitsToDouble(x[i]), Double.longBitsToDouble(y[i]), Double.longBitsToDouble(z[i]), Float.intBitsToFloat(w[i]), Float.intBitsToFloat(h[i]));
   }
 
-  private static record Data(String name, Vec3 pos, Vec3 vel, int fuse){};
+  private static record Data(String name, Vec3 pos, Vec3 vel, int fuse, Vec3 pistonDeltas){};
 
   private static void handleEntitiesRequestPacket(CompoundTag tag)
   {
@@ -146,13 +146,17 @@ public class ClientNetworkHandler
     long[] my = tag.getLongArray("my");
     long[] mz = tag.getLongArray("mz");
     int[] fuse = tag.getIntArray("fuse");
+    long[] px = tag.getLongArray("px");
+    long[] py = tag.getLongArray("py");
+    long[] pz = tag.getLongArray("pz");
 
     Map<Data, Integer> datas = new HashMap<>();
     for(int i = 0; i < ids.length; ++i)
     {
       Vec3 pos = new Vec3(Double.longBitsToDouble(x[i]), Double.longBitsToDouble(y[i]), Double.longBitsToDouble(z[i]));
       Vec3 vel = new Vec3(Double.longBitsToDouble(mx[i]), Double.longBitsToDouble(my[i]), Double.longBitsToDouble(mz[i]));
-      Data data = new Data(mc.level.getEntity(ids[i]).getType().toShortString(), pos, vel, fuse[i]);
+      Vec3 pistonDeltas = new Vec3(Double.longBitsToDouble(px[i]), Double.longBitsToDouble(py[i]), Double.longBitsToDouble(pz[i]));
+      Data data = new Data(mc.level.getEntity(ids[i]).getType().toShortString(), pos, vel, fuse[i], pistonDeltas);
       datas.put(data, datas.getOrDefault(data, 0) + 1);
     }
 
@@ -162,6 +166,7 @@ public class ClientNetworkHandler
       String name = data.name;
       Vec3 p = data.pos;
       Vec3 m = data.vel;
+      Vec3 pd = data.pistonDeltas;
       int f = data.fuse;
       DecimalFormat df = new DecimalFormat("0");
       df.setMaximumFractionDigits(340);
@@ -179,7 +184,10 @@ public class ClientNetworkHandler
         var("z", "s", df.format(p.z)),
         var("mx", "s", df.format(m.x)),
         var("my", "s", df.format(m.y)),
-        var("mz", "s", df.format(m.z)))
+        var("mz", "s", df.format(m.z)),
+        var("px", "s", df.format(pd.x)),
+        var("py", "s", df.format(pd.y)),
+        var("pz", "s", df.format(pd.z)))
       //#if MC < 11900
         , mc.player.getUUID()
       //#endif

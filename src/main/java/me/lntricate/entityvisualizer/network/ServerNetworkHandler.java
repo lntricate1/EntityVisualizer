@@ -6,6 +6,7 @@ import java.util.Set;
 import io.netty.buffer.Unpooled;
 import me.lntricate.entityvisualizer.IEntityHelper;
 import me.lntricate.entityvisualizer.helpers.EntityHelper.*;
+import me.lntricate.entityvisualizer.mixins.EntityAccessor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -261,9 +262,13 @@ public class ServerNetworkHandler
     long[] my = new long[ids.length];
     long[] mz = new long[ids.length];
     int[] fuse = new int[ids.length];
+    long[] px = new long[ids.length];
+    long[] py = new long[ids.length];
+    long[] pz = new long[ids.length];
     for(int i = 0; i < ids.length; ++i)
     {
       Entity entity = player.level.getEntity(ids[i]);
+      EntityAccessor eAccess = (EntityAccessor)entity;
       Vec3 m = entity.getDeltaMovement();
       x[i] = Double.doubleToLongBits(entity.getX());
       y[i] = Double.doubleToLongBits(entity.getY());
@@ -272,6 +277,10 @@ public class ServerNetworkHandler
       my[i] = Double.doubleToLongBits(m.y);
       mz[i] = Double.doubleToLongBits(m.z);
       fuse[i] = entity instanceof PrimedTnt tnt ? tnt.getFuse() : -1;
+      double[] pistonDeltas = eAccess.getPistonDeltas();
+      px[i] = Double.doubleToLongBits(pistonDeltas[0]);
+      py[i] = Double.doubleToLongBits(pistonDeltas[1]);
+      pz[i] = Double.doubleToLongBits(pistonDeltas[2]);
     }
     CompoundTag tag = new CompoundTag();
     tag.putInt("ID", 5);
@@ -282,6 +291,9 @@ public class ServerNetworkHandler
     tag.putLongArray("mx", mx);
     tag.putLongArray("my", my);
     tag.putLongArray("mz", mz);
+    tag.putLongArray("px", px);
+    tag.putLongArray("py", py);
+    tag.putLongArray("pz", pz);
     tag.putIntArray("fuse", fuse);
     FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
     packetBuf.writeVarInt(NetworkStuff.DATA);

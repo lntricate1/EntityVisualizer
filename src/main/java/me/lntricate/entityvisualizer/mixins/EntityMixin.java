@@ -49,7 +49,7 @@ public class EntityMixin
     if(level.isClientSide())
       return;
 
-    ((IEntityHelper)level).onMove(startpos, position, (Entity)(Object)this, noPhysics, movement.x >= movement.z);
+    ((IEntityHelper)level).onMove(startpos, position, (Entity)(Object)this, noPhysics, Math.abs(movement.x) >= Math.abs(movement.z));
   }
 
   @Inject(method = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"))

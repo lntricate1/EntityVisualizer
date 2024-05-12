@@ -62,21 +62,50 @@ public class ClientNetworkHandler
 
   private static void handleMovePacket(CompoundTag tag)
   {
+    if(!Configs.Renderers.ENTITY_TRAJECTORY.config.on())
+      return;
+
     ListTag id = (ListTag)tag.get("id");
     long[] x = tag.getLongArray("x");
     long[] y = tag.getLongArray("y");
     long[] z = tag.getLongArray("z");
-    long[] X = tag.getLongArray("X");
-    long[] Y = tag.getLongArray("Y");
-    long[] Z = tag.getLongArray("Z");
+    long[] dx = tag.getLongArray("dx");
+    long[] dy = tag.getLongArray("dy");
+    long[] dz = tag.getLongArray("dz");
+    long[] ax = tag.getLongArray("ax");
+    long[] ay = tag.getLongArray("ay");
+    long[] az = tag.getLongArray("az");
+    long[] bx = tag.getLongArray("bx");
+    long[] by = tag.getLongArray("by");
+    long[] bz = tag.getLongArray("bz");
+    long[] cy = tag.getLongArray("cy");
     byte[] flags = tag.getByteArray("flags");
 
-    for(int i = 0; i < x.length; i++)
-      RenderHandler.addMove(id.getString(i), Double.longBitsToDouble(x[i]), Double.longBitsToDouble(y[i]), Double.longBitsToDouble(z[i]), Double.longBitsToDouble(X[i]), Double.longBitsToDouble(Y[i]), Double.longBitsToDouble(Z[i]), (flags[i] & 1) == 1, (flags[i] & 2) == 2);
+    int i = 0;
+    for(; i < bx.length; i++)
+      RenderHandler.addMove(id.getString(i), Double.longBitsToDouble(x[i]), Double.longBitsToDouble(y[i]), Double.longBitsToDouble(z[i]),
+        Double.longBitsToDouble(dx[i]), Double.longBitsToDouble(dy[i]), Double.longBitsToDouble(dz[i]),
+        Double.longBitsToDouble(ax[i]), Double.longBitsToDouble(ay[i]), Double.longBitsToDouble(az[i]),
+        Double.longBitsToDouble(bx[i]), Double.longBitsToDouble(by[i]), Double.longBitsToDouble(bz[i]),
+        Double.longBitsToDouble(cy[i]), flags[i] == 2);
+
+    for(; i < ax.length; i++)
+      RenderHandler.addMove(id.getString(i), Double.longBitsToDouble(x[i]), Double.longBitsToDouble(y[i]), Double.longBitsToDouble(z[i]),
+        Double.longBitsToDouble(dx[i]), Double.longBitsToDouble(dy[i]), Double.longBitsToDouble(dz[i]),
+        Double.longBitsToDouble(ax[i]), Double.longBitsToDouble(ay[i]), Double.longBitsToDouble(az[i]),
+        Double.longBitsToDouble(by[i]), Double.longBitsToDouble(cy[i]), flags[i] == 2);
+
+    for(; i < x.length; i++)
+      RenderHandler.addMove(id.getString(i), Double.longBitsToDouble(x[i]), Double.longBitsToDouble(y[i]), Double.longBitsToDouble(z[i]),
+        Double.longBitsToDouble(dx[i]), Double.longBitsToDouble(dy[i]), Double.longBitsToDouble(dz[i]),
+        (flags[i] & 1) == 1, (flags[i] & 2) == 2);
   }
 
   private static void handleTickPacket(CompoundTag tag)
   {
+    if(!Configs.Renderers.ENTITY_TICKS.config.on())
+      return;
+
     ListTag id = (ListTag)tag.get("id");
     long[] x = tag.getLongArray("x");
     long[] y = tag.getLongArray("y");
@@ -90,6 +119,9 @@ public class ClientNetworkHandler
 
   private static void handleDeathPacket(CompoundTag tag)
   {
+    if(!Configs.Renderers.ENTITY_DEATHS.config.on())
+      return;
+
     ListTag id = (ListTag)tag.get("id");
     long[] x = tag.getLongArray("x");
     long[] y = tag.getLongArray("y");
@@ -103,6 +135,9 @@ public class ClientNetworkHandler
 
   private static void handleVelPacket(CompoundTag tag)
   {
+    if(!Configs.Renderers.ENTITY_VELOCITY.config.on())
+      return;
+
     ListTag id = (ListTag)tag.get("id");
     long[] x = tag.getLongArray("x");
     long[] y = tag.getLongArray("y");

@@ -123,60 +123,69 @@ public class RenderHandler implements IRenderer, IClientTickHandler
       return;
 
     EConfigRenderer config = Configs.Renderers.ENTITY_TICKS.config;
-    if(!config.on())
-      return;
-
     addCuboid(x, y, z, w/2, h, config.color1(), config.color2(), config.dur());
   }
 
-  public static void addMove(String id, double x, double y, double z, double X, double Y, double Z, boolean noPhysics, boolean xFirst)
+  public static void addMove(String id, double x, double y, double z, double dx, double dy, double dz, double ax, double ay, double az, double bx, double by, double bz, double cy, boolean xFirst)
   {
-    EConfigRenderer config = Configs.Renderers.ENTITY_TRAJECTORY.config;
-    if(!config.on())
-      return;
-
     if(!Configs.Lists.ENTITY_TRAJECTORY.shouldRender(id))
       return;
 
+    EConfigRenderer config = Configs.Renderers.ENTITY_TRAJECTORY.config;
+    addTrajectory(x, y, z, x+dx, y+dy, z+dz, xFirst, config.color2(), config.dur());
+    addTrajectory(x, y, z, x+ax, y+ay, z+az, xFirst, config.color2(), config.dur());
+    addTrajectory(x, y, z, x+bx, y+by, z+bz, xFirst, config.color1(), config.dur());
+    addLine(x+bx, y+by, z+bz, x+bx, y+cy, z+bz, config.color1(), config.dur());
+  }
+
+  public static void addMove(String id, double x, double y, double z, double dx, double dy, double dz, double ax, double ay, double az, double by, double cy, boolean xFirst)
+  {
+    if(!Configs.Lists.ENTITY_TRAJECTORY.shouldRender(id))
+      return;
+
+    EConfigRenderer config = Configs.Renderers.ENTITY_TRAJECTORY.config;
+    addTrajectory(x, y, z, x+dx, y+dy, z+dz, xFirst, config.color2(), config.dur());
+    addTrajectory(x, y, z, x+ax, y+ay, z+az, xFirst, config.color1(), config.dur());
+    addLine(x, y, z, x, y+by, z, config.color2(), config.dur());
+    addLine(x+ax, y+ay, z+az, x+ax, y+cy, z+az, config.color1(), config.dur());
+  }
+
+  public static void addMove(String id, double x, double y, double z, double dx, double dy, double dz, boolean noPhysics, boolean xFirst)
+  {
+    if(!Configs.Lists.ENTITY_TRAJECTORY.shouldRender(id))
+      return;
+
+    EConfigRenderer config = Configs.Renderers.ENTITY_TRAJECTORY.config;
     if(noPhysics)
-      addLine(x, y, z, X, Y, Z, config.color1(), config.dur());
+      addLine(x, y, z, x+dx, y+dy, z+dz, config.color1(), config.dur());
     else
-      addTrajectory(x, y, z, X, Y, Z, xFirst, config.color1(), config.dur());
+      addTrajectory(x, y, z, x+dx, y+dy, z+dz, xFirst, config.color1(), config.dur());
   }
 
   public static void addSpawn(String id, double x, double y, double z, float w, float h)
   {
-    EConfigRenderer config = Configs.Renderers.ENTITY_CREATION.config;
-    if(!config.on())
-      return;
-
     if(!Configs.Lists.ENTITY_CREATION.shouldRender(id))
       return;
 
+    EConfigRenderer config = Configs.Renderers.ENTITY_CREATION.config;
     addCuboid(x, y, z, w/2, h, config.color1(), config.color2(), config.dur());
   }
 
   public static void addDeath(String id, double x, double y, double z, float w, float h)
   {
-    EConfigRenderer config = Configs.Renderers.ENTITY_DEATHS.config;
-    if(!config.on())
-      return;
-
     if(!Configs.Lists.ENTITY_DEATHS.shouldRender(id))
       return;
 
+    EConfigRenderer config = Configs.Renderers.ENTITY_DEATHS.config;
     addCuboid(x, y, z, w/2, h, config.color1(), config.color2(), config.dur());
   }
 
   public static void addVel(String id, double x, double y, double z, double X, double Y, double Z)
   {
-    EConfigRenderer config = Configs.Renderers.ENTITY_VELOCITY.config;
-    if(!config.on())
-      return;
-
     if(!Configs.Lists.ENTITY_VELOCITY.shouldRender(id))
       return;
 
+    EConfigRenderer config = Configs.Renderers.ENTITY_VELOCITY.config;
     addLine(x, y, z, X, Y, Z, config.color1(), config.dur());
   }
 

@@ -11,7 +11,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 @Mixin(AbstractArrow.class)
 public abstract class AbstractArrowMixin extends Entity
@@ -27,9 +26,7 @@ public abstract class AbstractArrowMixin extends Entity
     if(level.isClientSide())
       return;
 
-    Vec3 pos = position();
-    Vec3 vel = getDeltaMovement();
     // ((IEntityHelper)level).onTick((Entity)(Object)this);
-    ((IEntityHelper)level).onMove(pos, pos.add(vel), (Entity)(Object)this, true, true);
+    ((IEntityHelper)level).onMove(position(), getDeltaMovement(), (Entity)(Object)this, true, true);
   }
 }

@@ -68,7 +68,7 @@ public class ServerNetworkHandler
       return;
 
     IEntityHelper helper = (IEntityHelper)level;
-    ClientboundCustomPayloadPacket moves = getPacketMove(helper.moves());
+    ClientboundCustomPayloadPacket moves = getPacketMove(helper.moves(), helper.move1s(), helper.move2s());
     ClientboundCustomPayloadPacket ticks = getPacketCuboid(helper.ticks(), 1);
     ClientboundCustomPayloadPacket deaths = getPacketCuboid(helper.deaths(), 2);
     ClientboundCustomPayloadPacket vels = getPacketVel(helper.vels());
@@ -83,27 +83,73 @@ public class ServerNetworkHandler
       }
   }
 
-  private static ClientboundCustomPayloadPacket getPacketMove(HashSet<Move> moves)
+  private static ClientboundCustomPayloadPacket getPacketMove(HashSet<Move> moves, HashSet<Move1> move1s, HashSet<Move2> move2s)
   {
+    int size2 = move2s.size();
+    int size1 = size2 + move1s.size();
+    int size0 = size1 + moves.size();
     ListTag id = new ListTag();
-    long[] x = new long[moves.size()];
-    long[] y = new long[moves.size()];
-    long[] z = new long[moves.size()];
-    long[] X = new long[moves.size()];
-    long[] Y = new long[moves.size()];
-    long[] Z = new long[moves.size()];
-    byte[] flags = new byte[moves.size()];
+    long[] x = new long[size0];
+    long[] y = new long[size0];
+    long[] z = new long[size0];
+    long[] dx = new long[size0];
+    long[] dy = new long[size0];
+    long[] dz = new long[size0];
+    byte[] flags = new byte[size0];
+    long[] ax = new long[size1];
+    long[] ay = new long[size1];
+    long[] az = new long[size1];
+    long[] by = new long[size1];
+    long[] cy = new long[size1];
+    long[] bx = new long[size2];
+    long[] bz = new long[size2];
 
     int i = 0;
+    for(Move2 move2 : move2s)
+    {
+      id.add(StringTag.valueOf(move2.id()));
+      x[i] = Double.doubleToLongBits(move2.x());
+      y[i] = Double.doubleToLongBits(move2.y());
+      z[i] = Double.doubleToLongBits(move2.z());
+      dx[i] = Double.doubleToLongBits(move2.dx());
+      dy[i] = Double.doubleToLongBits(move2.dy());
+      dz[i] = Double.doubleToLongBits(move2.dz());
+      ax[i] = Double.doubleToLongBits(move2.ax());
+      ay[i] = Double.doubleToLongBits(move2.ay());
+      az[i] = Double.doubleToLongBits(move2.az());
+      bx[i] = Double.doubleToLongBits(move2.bx());
+      by[i] = Double.doubleToLongBits(move2.by());
+      bz[i] = Double.doubleToLongBits(move2.bz());
+      cy[i] = Double.doubleToLongBits(move2.cy());
+      flags[i++] = move2.xFirst() ? 2 : (byte)0;
+    }
+
+    for(Move1 move1 : move1s)
+    {
+      id.add(StringTag.valueOf(move1.id()));
+      x[i] = Double.doubleToLongBits(move1.x());
+      y[i] = Double.doubleToLongBits(move1.y());
+      z[i] = Double.doubleToLongBits(move1.z());
+      dx[i] = Double.doubleToLongBits(move1.dx());
+      dy[i] = Double.doubleToLongBits(move1.dy());
+      dz[i] = Double.doubleToLongBits(move1.dz());
+      ax[i] = Double.doubleToLongBits(move1.ax());
+      ay[i] = Double.doubleToLongBits(move1.ay());
+      az[i] = Double.doubleToLongBits(move1.az());
+      by[i] = Double.doubleToLongBits(move1.by());
+      cy[i] = Double.doubleToLongBits(move1.cy());
+      flags[i++] = move1.xFirst() ? 2 : (byte)0;
+    }
+
     for(Move move : moves)
     {
       id.add(StringTag.valueOf(move.id()));
       x[i] = Double.doubleToLongBits(move.x());
       y[i] = Double.doubleToLongBits(move.y());
       z[i] = Double.doubleToLongBits(move.z());
-      X[i] = Double.doubleToLongBits(move.X());
-      Y[i] = Double.doubleToLongBits(move.Y());
-      Z[i] = Double.doubleToLongBits(move.Z());
+      dx[i] = Double.doubleToLongBits(move.dx());
+      dy[i] = Double.doubleToLongBits(move.dy());
+      dz[i] = Double.doubleToLongBits(move.dz());
       byte n = move.noPhysics() ? 1 : (byte)0;
       n += move.xFirst() ? 2 : 0;
       flags[i++] = n;
@@ -115,9 +161,16 @@ public class ServerNetworkHandler
     tag.putLongArray("x", x);
     tag.putLongArray("y", y);
     tag.putLongArray("z", z);
-    tag.putLongArray("X", X);
-    tag.putLongArray("Y", Y);
-    tag.putLongArray("Z", Z);
+    tag.putLongArray("dx", dx);
+    tag.putLongArray("dy", dy);
+    tag.putLongArray("dz", dz);
+    tag.putLongArray("ax", ax);
+    tag.putLongArray("ay", ay);
+    tag.putLongArray("az", az);
+    tag.putLongArray("bx", bx);
+    tag.putLongArray("by", by);
+    tag.putLongArray("bz", bz);
+    tag.putLongArray("cy", cy);
     tag.putByteArray("flags", flags);
 
     FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());

@@ -70,6 +70,7 @@ public class Configs implements IConfigHandler
   public static class Generic
   {
     public static final EConfigHotkey OPEN_CONFIG_GUI = new EConfigHotkey("openConfigGui", "V,C", "A hotkey to open the in-game Config GUI");
+    public static final EConfigInteger RANGE = new EConfigInteger("range", 256, 1, Integer.MAX_VALUE, "The maximum range in which to accept renders");
     public static final EConfigHotkey ENTITY_DATA = new EConfigHotkey("getEntityData", "LEFT_ALT,BUTTON_2", "A hotkey to get entity position and motion\nBy default, you can shift-click the message to copy it into chat");
     public static final EConfigString ENTITY_DATA_FORMAT = new EConfigString("getEntityDataFormat",
       "#gold\"%countx \", #light_purple\"%name\", \" | \", {\"insertion\":\"%x, %y, %z\",\"text\":\"\",\"extra\":[#red\"%x \", #green\"%y \", #blue\"%z\"]}, \" | \", {\"insertion\":\"%mx, %my, %mz\",\"color\":\"yellow\",\"text\":\"%mx %my %mz\"}, \" | \", {\"insertion\":\"%px, %py, %pz\",\"color\":\"aqua\",\"text\":\"%px %py %pz\"}, {\"clickEvent\":{\"action\":\"suggest_command\",\"value\":\"/summon %name %x %y %z {Motion:[%mxd, %myd, %mzd]}\"}, \"color\":\"gold\", \"text\":\" [summon]\"}", "The format for getEntityData.\nSee https://github.com/axialeaa/colorful-minihud for how to format\n§6%%%%x, %%%%y, %%%%z: XYZ position\n§6%%%%mx, %%%%my, %%%%mz: XYZ motion\n§6%%%%count: Number of entities in the same state\n§6%%%%name: The type of entity");
@@ -93,6 +94,7 @@ public class Configs implements IConfigHandler
     public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of
     (
       OPEN_CONFIG_GUI,
+      RANGE,
       ENTITY_DATA,
       ENTITY_DATA_FORMAT,
       ENTITY_DATA_TNT_FORMAT,

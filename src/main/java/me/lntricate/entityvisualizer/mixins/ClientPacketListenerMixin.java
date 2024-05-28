@@ -7,6 +7,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import me.lntricate.entityvisualizer.config.Configs;
+import me.lntricate.entityvisualizer.config.Configs.Renderers;
 import me.lntricate.entityvisualizer.event.RenderHandler;
 import me.lntricate.entityvisualizer.helpers.ClientExplosionHelper;
 import me.lntricate.entityvisualizer.network.ClientNetworkHandler;
@@ -46,6 +48,9 @@ public class ClientPacketListenerMixin
   @Inject(method = "handleAddEntity", at = @At("TAIL"))
   private void onEntitySpawn(ClientboundAddEntityPacket packet, CallbackInfo ci)
   {
+    if(!Configs.Renderers.ENTITY_CREATION.config.on())
+      return;
+
     Entity entity = level.getEntity(packet.getId());
     RenderHandler.addSpawn(entity.getType().toShortString(), packet.getX(), packet.getY(), packet.getZ(), entity.getBbWidth(), entity.getBbHeight());
   }

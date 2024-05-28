@@ -63,9 +63,9 @@ public class EntityMixin
 
     boolean xFirst = Math.abs(movement.x) >= Math.abs(movement.z);
     if(didCollisionCRef.get())
-      ((IEntityHelper)level).onMove(position, delta, collisionARef.get(), collisionBRef.get(), cir.getReturnValue().y, (Entity)(Object)this, xFirst);
+      ((IEntityHelper)level).onMove(position, delta, collisionARef.get(), collisionBRef.get().y, cir.getReturnValue(), (Entity)(Object)this, xFirst);
     else
-      ((IEntityHelper)level).onMove(position, delta, collisionARef.get(), collisionBRef.get().y, cir.getReturnValue().y, (Entity)(Object)this, xFirst);
+      ((IEntityHelper)level).onMove(position, delta, collisionARef.get(), cir.getReturnValue().y, (Entity)(Object)this, xFirst);
     didCollisionCRef.set(false);
   }
 

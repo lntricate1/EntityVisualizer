@@ -1,5 +1,6 @@
 package me.lntricate.entityvisualizer.mixins;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.function.BooleanSupplier;
 
@@ -25,6 +26,7 @@ public class ServerLevelMixin implements IEntityHelper
   @Unique private final HashSet<Cuboid> ticks = new HashSet<>();
   @Unique private final HashSet<Cuboid> deaths = new HashSet<>();
   @Unique private final HashSet<Vel> vels = new HashSet<>();
+  @Unique private final HashMap<Vec3, HashSet<Cuboid>> exposures = new HashMap<>();
 
   @Override public HashSet<Move> moves(){return moves;}
   @Override public HashSet<Move1> move1s(){return move1s;}
@@ -32,6 +34,7 @@ public class ServerLevelMixin implements IEntityHelper
   @Override public HashSet<Cuboid> ticks(){return ticks;}
   @Override public HashSet<Cuboid> deaths(){return deaths;}
   @Override public HashSet<Vel> vels(){return vels;}
+  @Override public HashMap<Vec3, HashSet<Cuboid>> exposures(){return exposures;}
 
   @Inject(method = "tick", at = @At("TAIL"))
   private void afterTick(BooleanSupplier booleanSupplier, CallbackInfo ci)
@@ -43,6 +46,7 @@ public class ServerLevelMixin implements IEntityHelper
     ticks.clear();
     deaths.clear();
     vels.clear();
+    exposures.clear();
   }
 
   @Override
@@ -53,24 +57,23 @@ public class ServerLevelMixin implements IEntityHelper
   }
 
   @Override
-  public void onMove(Vec3 pos, Vec3 delta, Vec3 collisionA, double collisionB, double collisionC, Entity entity, boolean xFirst)
+  public void onMove(Vec3 pos, Vec3 delta, Vec3 collisionA, double collisionC, Entity entity, boolean xFirst)
   {
     Move1 move = new Move1(entity.getType().toShortString(), pos.x, pos.y, pos.z, delta.x, delta.y, delta.z,
-      collisionA.x, collisionA.y, collisionA.z, collisionB, collisionC, xFirst);
+      collisionA.x, collisionA.y, collisionA.z, collisionC, xFirst);
     move1s.add(move);
   }
 
   @Override
-  public void onMove(Vec3 pos, Vec3 delta, Vec3 collisionA, Vec3 collisionB, double collisionC, Entity entity, boolean xFirst)
+  public void onMove(Vec3 pos, Vec3 delta, Vec3 collisionA, double collisionB, Vec3 collisionC, Entity entity, boolean xFirst)
   {
     Move2 move = new Move2(entity.getType().toShortString(), pos.x, pos.y, pos.z, delta.x, delta.y, delta.z,
-      collisionA.x, collisionA.y, collisionA.z, collisionB.x, collisionB.y, collisionB.z, collisionC, xFirst);
+      collisionA.x, collisionA.y, collisionA.z, collisionB, collisionC.x, collisionC.y, collisionC.z, xFirst);
     move2s.add(move);
   }
 
   @Override
-  public void onTick(Entity entity)
-  {
+  public void onTick(Entity entity) {
     Vec3 pos = entity.position();
     Cuboid tick = new Cuboid(entity.getType().toShortString(), pos.x, pos.y, pos.z, entity.getBbWidth(), entity.getBbHeight());
     ticks.add(tick);
@@ -90,5 +93,20 @@ public class ServerLevelMixin implements IEntityHelper
     Vec3 pos = entity.position();
     Cuboid death = new Cuboid(entity.getType().toShortString(), pos.x, pos.y, pos.z, entity.getBbWidth(), entity.getBbHeight());
     deaths.add(death);
+  }
+
+
+  @Override
+  public void onExposure(Vec3 pos, Entity entity)
+  {
+    Vec3 epos = entity.position();
+    if(exposures.containsKey(pos))
+      exposures.get(pos).add(new Cuboid(entity.getType().toShortString(), epos.x, epos.y, epos.z, entity.getBbWidth(), entity.getBbHeight()));
+    else
+    {
+      HashSet<Cuboid> set = new HashSet<>();
+      set.add(new Cuboid(entity.getType().toShortString(), epos.x, epos.y, epos.z, entity.getBbWidth(), entity.getBbHeight()));
+      exposures.put(pos, set);
+    }
   }
 }

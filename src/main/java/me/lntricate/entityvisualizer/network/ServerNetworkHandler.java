@@ -1,6 +1,8 @@
 package me.lntricate.entityvisualizer.network;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import io.netty.buffer.Unpooled;
@@ -72,6 +74,7 @@ public class ServerNetworkHandler
     ClientboundCustomPayloadPacket ticks = getPacketCuboid(helper.ticks(), 1);
     ClientboundCustomPayloadPacket deaths = getPacketCuboid(helper.deaths(), 2);
     ClientboundCustomPayloadPacket vels = getPacketVel(helper.vels());
+    ClientboundCustomPayloadPacket[] exposures = getPacketsExposures(helper.exposures());
 
     for(ServerPlayer player : players)
       if(player.level == level)
@@ -80,6 +83,8 @@ public class ServerNetworkHandler
         player.connection.send(ticks);
         player.connection.send(deaths);
         player.connection.send(vels);
+        for(ClientboundCustomPayloadPacket packet : exposures)
+          player.connection.send(packet);
       }
   }
 
@@ -99,10 +104,10 @@ public class ServerNetworkHandler
     long[] ax = new long[size1];
     long[] ay = new long[size1];
     long[] az = new long[size1];
-    long[] by = new long[size1];
+    long[] by = new long[size2];
+    long[] cx = new long[size2];
     long[] cy = new long[size1];
-    long[] bx = new long[size2];
-    long[] bz = new long[size2];
+    long[] cz = new long[size2];
 
     int i = 0;
     for(Move2 move2 : move2s)
@@ -117,10 +122,10 @@ public class ServerNetworkHandler
       ax[i] = Double.doubleToLongBits(move2.ax());
       ay[i] = Double.doubleToLongBits(move2.ay());
       az[i] = Double.doubleToLongBits(move2.az());
-      bx[i] = Double.doubleToLongBits(move2.bx());
       by[i] = Double.doubleToLongBits(move2.by());
-      bz[i] = Double.doubleToLongBits(move2.bz());
+      cx[i] = Double.doubleToLongBits(move2.cx());
       cy[i] = Double.doubleToLongBits(move2.cy());
+      cz[i] = Double.doubleToLongBits(move2.cz());
       flags[i++] = move2.xFirst() ? 2 : (byte)0;
     }
 
@@ -136,7 +141,6 @@ public class ServerNetworkHandler
       ax[i] = Double.doubleToLongBits(move1.ax());
       ay[i] = Double.doubleToLongBits(move1.ay());
       az[i] = Double.doubleToLongBits(move1.az());
-      by[i] = Double.doubleToLongBits(move1.by());
       cy[i] = Double.doubleToLongBits(move1.cy());
       flags[i++] = move1.xFirst() ? 2 : (byte)0;
     }
@@ -167,10 +171,10 @@ public class ServerNetworkHandler
     tag.putLongArray("ax", ax);
     tag.putLongArray("ay", ay);
     tag.putLongArray("az", az);
-    tag.putLongArray("bx", bx);
     tag.putLongArray("by", by);
-    tag.putLongArray("bz", bz);
+    tag.putLongArray("cx", cx);
     tag.putLongArray("cy", cy);
+    tag.putLongArray("cz", cz);
     tag.putByteArray("flags", flags);
 
     FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
@@ -252,58 +256,51 @@ public class ServerNetworkHandler
     return new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, packetBuf);
   }
 
-  public static void sendExposures(ServerLevel level, double px, double py, double pz, HashSet<Cuboid> exposures)
+  private static ClientboundCustomPayloadPacket[] getPacketsExposures(HashMap<Vec3, HashSet<Cuboid>> exposuresMap)
   {
-    if(players.isEmpty())
-      return;
-
-    boolean shouldExit = true;
-    for(ServerPlayer player : players)
-      if(player.level == level)
-      {
-        shouldExit = false;
-        break;
-      }
-    if(shouldExit)
-      return;
-
-    ListTag id = new ListTag();
-    long[] x = new long[exposures.size()];
-    long[] y = new long[exposures.size()];
-    long[] z = new long[exposures.size()];
-    int[] w = new int[exposures.size()];
-    int[] h = new int[exposures.size()];
-
-    int i = 0;
-    for(Cuboid exposure : exposures)
+    ClientboundCustomPayloadPacket[] packets = new ClientboundCustomPayloadPacket[exposuresMap.size()];
+    int j = 0;
+    for(Map.Entry<Vec3, HashSet<Cuboid>> entry : exposuresMap.entrySet())
     {
-      id.add(StringTag.valueOf(exposure.id()));
-      x[i] = Double.doubleToLongBits(exposure.x());
-      y[i] = Double.doubleToLongBits(exposure.y());
-      z[i] = Double.doubleToLongBits(exposure.z());
-      w[i] = Float.floatToIntBits(exposure.w());
-      h[i++] = Float.floatToIntBits(exposure.h());
+      HashSet<Cuboid> exposures = entry.getValue();
+      ListTag id = new ListTag();
+      long[] x = new long[exposures.size()];
+      long[] y = new long[exposures.size()];
+      long[] z = new long[exposures.size()];
+      int[] w = new int[exposures.size()];
+      int[] h = new int[exposures.size()];
+
+      int i = 0;
+      for(Cuboid exposure : exposures)
+      {
+        id.add(StringTag.valueOf(exposure.id()));
+        x[i] = Double.doubleToLongBits(exposure.x());
+        y[i] = Double.doubleToLongBits(exposure.y());
+        z[i] = Double.doubleToLongBits(exposure.z());
+        w[i] = Float.floatToIntBits(exposure.w());
+        h[i++] = Float.floatToIntBits(exposure.h());
+      }
+
+      CompoundTag tag = new CompoundTag();
+      tag.putInt("ID", 4);
+      tag.put("id", id);
+      Vec3 pos = entry.getKey();
+      tag.putDouble("px", pos.x);
+      tag.putDouble("py", pos.y);
+      tag.putDouble("pz", pos.z);
+      tag.putLongArray("x", x);
+      tag.putLongArray("y", y);
+      tag.putLongArray("z", z);
+      tag.putIntArray("w", w);
+      tag.putIntArray("h", h);
+
+      FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
+      packetBuf.writeVarInt(NetworkStuff.DATA);
+      packetBuf.writeNbt(tag);
+      packets[j++] = new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, packetBuf);
     }
 
-    CompoundTag tag = new CompoundTag();
-    tag.putInt("ID", 4);
-    tag.put("id", id);
-    tag.putDouble("px", px);
-    tag.putDouble("py", py);
-    tag.putDouble("pz", pz);
-    tag.putLongArray("x", x);
-    tag.putLongArray("y", y);
-    tag.putLongArray("z", z);
-    tag.putIntArray("w", w);
-    tag.putIntArray("h", h);
-
-    FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
-    packetBuf.writeVarInt(NetworkStuff.DATA);
-    packetBuf.writeNbt(tag);
-    ClientboundCustomPayloadPacket packet = new ClientboundCustomPayloadPacket(NetworkStuff.CHANNEL, packetBuf);
-    for(ServerPlayer player : players)
-      if(player.level == level)
-        player.connection.send(packet);
+    return packets;
   }
 
   public static void sendRequestedEntities(ServerPlayer player, int[] ids)

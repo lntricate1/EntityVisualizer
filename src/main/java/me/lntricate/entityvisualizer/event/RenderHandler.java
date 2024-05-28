@@ -43,6 +43,8 @@ public class RenderHandler implements IRenderer, IClientTickHandler
   private static final HashSet<Point> points = new HashSet<>();
   // private static final Map<Index, QuadFollow> quadFollows = new HashMap<>();
   // private static final Map<Index, Text> texts = new HashMap<>();
+  private static long rangeSq = 0;
+  private static Vec3 cpos = Vec3.ZERO;
 
   public static RenderHandler getInstance()
   {
@@ -53,7 +55,7 @@ public class RenderHandler implements IRenderer, IClientTickHandler
   public void onRenderWorldLast(PoseStack poseStack, Matrix4f projMatrix)
   {
     Camera cam = mc.gameRenderer.getMainCamera();
-    Vec3 cpos = cam.getPosition();
+    cpos = cam.getPosition();
     double x = cpos.x, y = cpos.y, z = cpos.z;
     Vector3f left = cam.getLeftVector();
     Vector3f up = cam.getUpVector();
@@ -115,44 +117,48 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     lines.removeIf((Line line) -> time > line.removalTime);
     quads.removeIf((Quad quad) -> time > quad.removalTime);
     points.removeIf((Point point) -> time > point.removalTime);
+    rangeSq = Configs.Generic.RANGE.getIntegerValue();
+    rangeSq *= rangeSq;
   }
 
   public static void addTick(String id, double x, double y, double z, float w, float h)
   {
-    if(!Configs.Lists.ENTITY_TICKS.shouldRender(id))
+    if(cpos.distanceToSqr(x, y, z) > rangeSq || !Configs.Lists.ENTITY_TICKS.shouldRender(id))
       return;
 
     EConfigRenderer config = Configs.Renderers.ENTITY_TICKS.config;
     addCuboid(x, y, z, w/2, h, config.color1(), config.color2(), config.dur());
   }
 
-  public static void addMove(String id, double x, double y, double z, double dx, double dy, double dz, double ax, double ay, double az, double bx, double by, double bz, double cy, boolean xFirst)
+  public static void addMove(String id, double x, double y, double z, double dx, double dy, double dz, double ax, double ay, double az, double by, double cx, double cy, double cz, boolean xFirst)
   {
-    if(!Configs.Lists.ENTITY_TRAJECTORY.shouldRender(id))
+    if((cpos.distanceToSqr(x, y, z) > rangeSq && cpos.distanceToSqr(x+cx, y+cy, z+cz) > rangeSq) ||
+      !Configs.Lists.ENTITY_TRAJECTORY.shouldRender(id))
       return;
 
     EConfigRenderer config = Configs.Renderers.ENTITY_TRAJECTORY.config;
     addTrajectory(x, y, z, x+dx, y+dy, z+dz, xFirst, config.color2(), config.dur());
     addTrajectory(x, y, z, x+ax, y+ay, z+az, xFirst, config.color2(), config.dur());
-    addTrajectory(x, y, z, x+bx, y+by, z+bz, xFirst, config.color1(), config.dur());
-    addLine(x+bx, y+by, z+bz, x+bx, y+cy, z+bz, config.color1(), config.dur());
+    addTrajectory(x, y, z, x+cx, y+by, z+cz, xFirst, config.color1(), config.dur());
+    addLine(x+cx, y+by, z+cz, x+cx, y+cy, z+cz, config.color1(), config.dur());
   }
 
-  public static void addMove(String id, double x, double y, double z, double dx, double dy, double dz, double ax, double ay, double az, double by, double cy, boolean xFirst)
+  public static void addMove(String id, double x, double y, double z, double dx, double dy, double dz, double ax, double ay, double az, double cy, boolean xFirst)
   {
-    if(!Configs.Lists.ENTITY_TRAJECTORY.shouldRender(id))
+    if((cpos.distanceToSqr(x, y, z) > rangeSq && cpos.distanceToSqr(x+ax, y+cy, z+az) > rangeSq) ||
+      !Configs.Lists.ENTITY_TRAJECTORY.shouldRender(id))
       return;
 
     EConfigRenderer config = Configs.Renderers.ENTITY_TRAJECTORY.config;
     addTrajectory(x, y, z, x+dx, y+dy, z+dz, xFirst, config.color2(), config.dur());
     addTrajectory(x, y, z, x+ax, y+ay, z+az, xFirst, config.color1(), config.dur());
-    addLine(x, y, z, x, y+by, z, config.color2(), config.dur());
     addLine(x+ax, y+ay, z+az, x+ax, y+cy, z+az, config.color1(), config.dur());
   }
 
   public static void addMove(String id, double x, double y, double z, double dx, double dy, double dz, boolean noPhysics, boolean xFirst)
   {
-    if(!Configs.Lists.ENTITY_TRAJECTORY.shouldRender(id))
+    if((cpos.distanceToSqr(x, y, z) > rangeSq && cpos.distanceToSqr(x+dx, y+dy, z+dz) > rangeSq) ||
+      !Configs.Lists.ENTITY_TRAJECTORY.shouldRender(id))
       return;
 
     EConfigRenderer config = Configs.Renderers.ENTITY_TRAJECTORY.config;
@@ -164,7 +170,7 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
   public static void addSpawn(String id, double x, double y, double z, float w, float h)
   {
-    if(!Configs.Lists.ENTITY_CREATION.shouldRender(id))
+    if(cpos.distanceToSqr(x, y, z) > rangeSq || !Configs.Lists.ENTITY_CREATION.shouldRender(id))
       return;
 
     EConfigRenderer config = Configs.Renderers.ENTITY_CREATION.config;
@@ -173,7 +179,7 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
   public static void addDeath(String id, double x, double y, double z, float w, float h)
   {
-    if(!Configs.Lists.ENTITY_DEATHS.shouldRender(id))
+    if(cpos.distanceToSqr(x, y, z) > rangeSq || !Configs.Lists.ENTITY_DEATHS.shouldRender(id))
       return;
 
     EConfigRenderer config = Configs.Renderers.ENTITY_DEATHS.config;
@@ -182,7 +188,7 @@ public class RenderHandler implements IRenderer, IClientTickHandler
 
   public static void addVel(String id, double x, double y, double z, double X, double Y, double Z)
   {
-    if(!Configs.Lists.ENTITY_VELOCITY.shouldRender(id))
+    if(cpos.distanceToSqr(x, y, z) > rangeSq || !Configs.Lists.ENTITY_VELOCITY.shouldRender(id))
       return;
 
     EConfigRenderer config = Configs.Renderers.ENTITY_VELOCITY.config;

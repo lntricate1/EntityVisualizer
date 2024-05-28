@@ -75,25 +75,26 @@ public class ClientNetworkHandler
     long[] ax = tag.getLongArray("ax");
     long[] ay = tag.getLongArray("ay");
     long[] az = tag.getLongArray("az");
-    long[] bx = tag.getLongArray("bx");
     long[] by = tag.getLongArray("by");
-    long[] bz = tag.getLongArray("bz");
+    long[] cx = tag.getLongArray("cx");
     long[] cy = tag.getLongArray("cy");
+    long[] cz = tag.getLongArray("cz");
     byte[] flags = tag.getByteArray("flags");
 
     int i = 0;
-    for(; i < bx.length; i++)
+    for(; i < cx.length; i++)
       RenderHandler.addMove(id.getString(i), Double.longBitsToDouble(x[i]), Double.longBitsToDouble(y[i]), Double.longBitsToDouble(z[i]),
         Double.longBitsToDouble(dx[i]), Double.longBitsToDouble(dy[i]), Double.longBitsToDouble(dz[i]),
         Double.longBitsToDouble(ax[i]), Double.longBitsToDouble(ay[i]), Double.longBitsToDouble(az[i]),
-        Double.longBitsToDouble(bx[i]), Double.longBitsToDouble(by[i]), Double.longBitsToDouble(bz[i]),
-        Double.longBitsToDouble(cy[i]), flags[i] == 2);
+        Double.longBitsToDouble(by[i]),
+        Double.longBitsToDouble(cx[i]), Double.longBitsToDouble(cy[i]), Double.longBitsToDouble(cz[i]),
+        flags[i] == 2);
 
     for(; i < ax.length; i++)
       RenderHandler.addMove(id.getString(i), Double.longBitsToDouble(x[i]), Double.longBitsToDouble(y[i]), Double.longBitsToDouble(z[i]),
         Double.longBitsToDouble(dx[i]), Double.longBitsToDouble(dy[i]), Double.longBitsToDouble(dz[i]),
         Double.longBitsToDouble(ax[i]), Double.longBitsToDouble(ay[i]), Double.longBitsToDouble(az[i]),
-        Double.longBitsToDouble(by[i]), Double.longBitsToDouble(cy[i]), flags[i] == 2);
+        Double.longBitsToDouble(cy[i]), flags[i] == 2);
 
     for(; i < x.length; i++)
       RenderHandler.addMove(id.getString(i), Double.longBitsToDouble(x[i]), Double.longBitsToDouble(y[i]), Double.longBitsToDouble(z[i]),
@@ -158,6 +159,10 @@ public class ClientNetworkHandler
     double px = tag.getDouble("px");
     double py = tag.getDouble("py");
     double pz = tag.getDouble("pz");
+
+    if(mc.player.getEyePosition().distanceToSqr(px, py, pz) > Configs.Generic.RANGE.getIntegerValue() * Configs.Generic.RANGE.getIntegerValue())
+      return;
+
     ListTag id = (ListTag)tag.get("id");
     long[] x = tag.getLongArray("x");
     long[] y = tag.getLongArray("y");

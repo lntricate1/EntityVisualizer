@@ -9,12 +9,17 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+//#if MC >= 11904
+//$$ import net.minecraft.client.gui.Font.DisplayMode;
+//#endif
 //#if MC >= 11900
 //$$ import org.joml.Matrix4f;
 //$$ import org.joml.Vector3f;
+//$$ import org.joml.Quaternionf;
 //#else
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
+import com.mojang.math.Quaternion;
 //#endif
 
 import fi.dy.masa.malilib.interfaces.IClientTickHandler;
@@ -24,25 +29,27 @@ import fi.dy.masa.malilib.util.Color4f;
 import me.lntricate.entityvisualizer.config.Configs.Generic;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-// import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.MultiBufferSource.BufferSource;
 import net.minecraft.core.BlockPos;
-// import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 public class RenderHandler implements IRenderer, IClientTickHandler
 {
   private static final Minecraft mc = Minecraft.getInstance();
-  // private static final Font font = mc.font;
+  private static final Font font = mc.font;
   private static final RenderHandler INSTANCE = new RenderHandler();
   private static record Index(double x, double y, double z, Shape s, int n){}
-  private static enum Shape{LINE, TRAJECTORY, CUBOID, POINT}
+  private static enum Shape{LINE, TRAJECTORY, CUBOID, POINT, QUAD, TEXT}
   private static final Map<Index, Line> lines = new HashMap<>();
   private static final Map<Index, Quad> quads = new HashMap<>();
   private static final Map<Index, Point> points = new HashMap<>();
   // private static final Map<Index, QuadFollow> quadFollows = new HashMap<>();
-  // private static final Map<Index, Text> texts = new HashMap<>();
+  private static final Map<Index, Text> texts = new HashMap<>();
 
   public static RenderHandler getInstance()
   {
@@ -81,8 +88,8 @@ public class RenderHandler implements IRenderer, IClientTickHandler
       renderPoints(buffer, left, up, x, y, z);
     tesselator.end();
 
-    // for(Text text : texts.values())
-    //   text.render(poseStack, buffer, cam);
+    for(Text text : texts.values())
+      text.render(poseStack, buffer, cam);
     // poseStack.popPose();
   }
 
@@ -115,6 +122,8 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     lines.values().removeIf((Line line) -> time > line.removalTime);
     quads.values().removeIf((Quad quad) -> time > quad.removalTime);
     points.values().removeIf((Point point) -> time > point.removalTime);
+    // quadFollows.values().removeIf((QuadFollow quadFollow) -> time > quadFollow.removalTime);
+    texts.values().removeIf((Text text) -> time > text.removalTime);
   }
 
   public static void addPoint(double x, double y, double z, Color4f color, int ticks)
@@ -176,11 +185,16 @@ public class RenderHandler implements IRenderer, IClientTickHandler
     }
   }
 
-  // public static void addText(double x, double y, double z, Component component, Color4f background, int ticks)
-  // {
-  //   quadFollows.put(new Index(x, y, z, 0), new QuadFollow((float)x, (float)y, (float)z, (font.width(component)+2)/80F, (font.lineHeight+2)/80F, background, mc.level.getGameTime() + ticks));
-  //   texts.put(new Index(x, y, z, 0), new Text((float)x, (float)y, (float)z, component, new Color4f(1F, 1F, 1F), mc.level.getGameTime() + ticks));
-  // }
+  public static void addText(double x, double y, double z, Component component, Color4f foreground, Color4f background, int ticks)
+  {
+    // quadFollows.put(new Index(x, y, z, Shape.QUAD, 0), new QuadFollow((float)x, (float)y, (float)z, (font.width(component)+2)/80F, (font.lineHeight+2)/80F, background, mc.level.getGameTime() + ticks));
+    texts.put(new Index(x, y, z, Shape.TEXT, 0), new Text((float)x, (float)y, (float)z, component, foreground, background, mc.level.getGameTime() + ticks));
+  }
+
+  public static void addText(BlockPos pos, Component component, Color4f foreground, Color4f background, int ticks)
+  {
+    addText(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, component, foreground, background, ticks);
+  }
 
   public static void addCuboid(BlockPos pos, Color4f fill, Color4f stroke, int ticks)
   {
@@ -238,26 +252,38 @@ public class RenderHandler implements IRenderer, IClientTickHandler
   //   {
   //     ux *= h; uy *= h; uz *= h;
   //     lx *= w; lz *= w;
-  //     double dx = ux+lx, dy = uy, dz = uz+lz;
-  //     buffer.vertex(dx-cx, dy-cy, dz-cz).color(color.r, color.g, color.b, color.a).endVertex();
-  //     buffer.vertex(-dx-cx, dy-cy, -dz-cx).color(color.r, color.g, color.b, color.a).endVertex();
-  //     buffer.vertex(-dx-cx, -dy-cy, -dz-cx).color(color.r, color.g, color.b, color.a).endVertex();
-  //     buffer.vertex(-dx-cx, -dy-cy, dz-cx).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(x+ux+lx-cx, y+uy-cy, z+uz+lz-cz).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(x-ux+lx-cx, y-uy-cy, z-uz+lz-cz).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(x-ux-lx-cx, y-uy-cy, z-uz-lz-cz).color(color.r, color.g, color.b, color.a).endVertex();
+  //     buffer.vertex(x+ux-lx-cx, y+uy-cy, z+uz-lz-cz).color(color.r, color.g, color.b, color.a).endVertex();
   //   }
   // }
 
-  // private static final record Text(float x, float y, float z, Component component, Color4f color, long removalTime)
-  // {
-  //   public void render(PoseStack poseStack, BufferBuilder buffer, Camera cam)
-  //   {
-  //     poseStack.pushPose();
-  //     Quaternion rot = Vector3f.YP.rotationDegrees(180-cam.getYRot());
-  //     rot.mul(Vector3f.XP.rotationDegrees(cam.getXRot()));
-  //     poseStack.translate(x, -y, z);
-  //     poseStack.scale(0.025F, 0.025F, 0.025F);
-  //     poseStack.mulPose(rot);
-  //     font.draw(poseStack, component, -font.width(component)/2, -font.lineHeight/2, color.intValue);
-  //     poseStack.popPose();
-  //   }
-  // }
+  private static final record Text(float x, float y, float z, Component component, Color4f foreground, Color4f background, long removalTime)
+  {
+    public void render(PoseStack poseStack, BufferBuilder buffer, Camera cam)
+    {
+      poseStack.pushPose();
+      poseStack.mulPose(cam.rotation());
+      Vec3 cpos = cam.getPosition();
+      poseStack.translate(-x+cpos.x, y-cpos.y, -z+cpos.z);
+      poseStack.scale(-0.025F, -0.025F, -0.025F);
+      //#if MC >= 11900
+      //$$ Quaternionf rot = new Quaternionf(0F, 1F, 0F, 0F);
+      //#else
+      Quaternion rot = new Quaternion(0F, 1F, 0F, 0F);
+      //#endif
+      rot.mul(cam.rotation());
+      poseStack.mulPose(rot);
+      // font.draw(poseStack, component, -font.width(component)/2, -font.lineHeight/2, color.intValue);
+      BufferSource buf = MultiBufferSource.immediate(buffer);
+      //#if MC >= 11904
+      //$$ font.drawInBatch(component, -font.width(component)/2, -font.lineHeight/2, foreground.intValue, false, poseStack.last().pose(), buf, DisplayMode.SEE_THROUGH, background.intValue, 15728880);
+      //#else
+      font.drawInBatch(component, -font.width(component)/2, -font.lineHeight/2, foreground.intValue, false, poseStack.last().pose(), buf, true, background.intValue, 15728880);
+      //#endif
+      buf.endBatch();
+      poseStack.popPose();
+    }
+  }
 }

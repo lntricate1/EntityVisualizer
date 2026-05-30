@@ -18,6 +18,11 @@ import me.lntricate.entityvisualizer.event.RenderHandler;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigRenderer;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+//#if MC >= 11900
+//$$ import net.minecraft.network.chat.Component;
+//#else
+import net.minecraft.network.chat.TextComponent;
+//#endif
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -82,7 +87,7 @@ public class ExplosionHelper
     if(Renderers.EXPLOSION_ENTITY_RAYS.config.on())
       explosionEntityRays(x, y, z, level, power);
 
-    if(Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
+    if(Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on() || Renderers.EXPLOSION_BLOCKS_PROBABILITY.config.on())
       explosionAffectedBlocks(pos, level, power);
   }
 
@@ -114,10 +119,17 @@ public class ExplosionHelper
     return points;
   }
 
-  public static Pair<Set<BlockPos>, Set<BlockPos>> getAffectedBlocks(Vec3 startPos, float power, ClientLevel level)
+  private static double clamp(double x, double min, double max){return Math.min(Math.max(x, min), max);}
+
+  // public static Pair<Set<BlockPos>, Set<BlockPos>> getAffectedBlocks(Vec3 startPos, float power, ClientLevel level)
+  // Returns the probability that each block does NOT blow up, with 1.0 guaranteeing it survives and 0.0 guaranteeing it explodes
+  // also returns the set of guaranteed destroyed blocks, to avoid float rounding issues
+  // any blocks in the probabilities HashMap are POSSIBLE to destroy, even if the probability says 0
+  public static Pair<Set<BlockPos>, Map<BlockPos, Double>> getAffectedBlocks(Vec3 startPos, float power, ClientLevel level)
   {
+    Map<BlockPos, Double> probabilities = new HashMap<>();
     Set<BlockPos> outMin = new HashSet<>();
-    Set<BlockPos> outMax = new HashSet<>();
+    // Set<BlockPos> outMax = new HashSet<>();
     float rayStrengthMinStart = power * 0.7f;
     float rayStrengthMaxStart = power * 1.3f;
 
@@ -137,10 +149,11 @@ public class ExplosionHelper
     }
     if(rayStrengthMaxStart > 0F && Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(block))
     {
+      double probability = clamp(rayStrengthMinStart / (rayStrengthMinStart - rayStrengthMaxStart), 0D, 1D);
+      probabilities.put(pos, probability);
+
       if(rayStrengthMinStart > 0F)
         outMin.add(pos);
-      else
-        outMax.add(pos);
     }
     rayStrengthMinStart -= 0.22500001F;
     rayStrengthMaxStart -= 0.22500001F;
@@ -169,17 +182,30 @@ public class ExplosionHelper
           rayStrengthMax -= blastRes;
         }
 
-        if(outMin.contains(pos) || !Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(block) || rayStrengthMax <= 0F)
+        // if(outMin.contains(pos) || !Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(block) || rayStrengthMax <= 0F)
+        if(!Configs.Lists.EXPLOSION_AFFECTED_BLOCKS.shouldRender(block) || rayStrengthMax <= 0F)
           continue;
+
+        // If 0 < rayStrengthMin < rayStrengthMax, block certainly explodes
+        // If rayStrengthMin < 0 < rayStrengthMax, block might explode
+        // If rayStrengthMin < rayStrengthMax < 0, block cannot explode
+        // To compute the probability, we abuse the fact that the distribution is uniform
+        // and get the position of 0 lerped from rayStrengthMin to rayStrengthMax
+        // NOTE: we cannot rely on the probabilities to compute whether a block can blow up, because
+        // we could have probability small enough to round down to 0 (or large enough to round up to 1)
+        // while still not guaranteed
+        double probability = clamp(rayStrengthMin / (rayStrengthMin - rayStrengthMax), 0D, 1D);
+        if(probabilities.containsKey(pos))
+          probabilities.put(pos, probabilities.get(pos) * probability);
+        else
+          probabilities.put(pos, probability);
 
         if(rayStrengthMin > 0F)
           outMin.add(pos);
-        else
-          outMax.add(pos);
       }
     }
-    outMax.removeAll(outMin);
-    return Pair.of(outMin, outMax);
+    // outMax.removeAll(outMin);
+    return Pair.of(outMin, probabilities);
   }
 
   public static Triple<Set<Vec3>, Set<Vec3>, Set<Vec3>> getBlockPoints(Vec3 startPos, float power, ClientLevel level)
@@ -295,11 +321,31 @@ public class ExplosionHelper
 
   public static void explosionAffectedBlocks(Vec3 pos, ClientLevel level, float power)
   {
-    Pair<Set<BlockPos>, Set<BlockPos>> blocks = getAffectedBlocks(pos, power, level);
+
+    Pair<Set<BlockPos>, Map<BlockPos, Double>> blocks = getAffectedBlocks(pos, power, level);
     Color4f stroke = new Color4f(0, 0, 0, 0);
-    for(BlockPos min : blocks.getLeft())
-      RenderHandler.addCuboid(min, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color1(), stroke, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.dur());
-    for(BlockPos max : blocks.getRight())
-      RenderHandler.addCuboid(max, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color2(), stroke, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.dur());
+    if(Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
+      for(BlockPos min : blocks.getLeft())
+        RenderHandler.addCuboid(min, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color1(), stroke, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.dur());
+
+    blocks.getRight().forEach((pos1, probability) -> {
+      if(!blocks.getLeft().contains(pos1))
+      {
+        if(Renderers.EXPLOSION_AFFECTED_BLOCKS.config.on())
+          RenderHandler.addCuboid(pos1, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.color2(), stroke, Renderers.EXPLOSION_AFFECTED_BLOCKS.config.dur());
+        if(Renderers.EXPLOSION_BLOCKS_PROBABILITY.config.on())
+        {
+          //#if MC >= 11900
+          //$$ Component text = Component.literal(String.format("%." + Configs.Generic.PROBABILITY_DIGITS.getIntegerValue() + "f%%", 100*(1-probability)));
+          //#else
+          TextComponent text = new TextComponent(String.format("%." + Configs.Generic.PROBABILITY_DIGITS.getIntegerValue() + "f%%", 100*(1-probability)));
+          //#endif
+          RenderHandler.addText(pos1, text,
+            Renderers.EXPLOSION_BLOCKS_PROBABILITY.config.color1(),
+            Renderers.EXPLOSION_BLOCKS_PROBABILITY.config.color2(),
+            Renderers.EXPLOSION_BLOCKS_PROBABILITY.config.dur());
+        }
+      }
+    });
   }
 }

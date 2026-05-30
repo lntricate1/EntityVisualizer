@@ -78,6 +78,7 @@ public class Configs implements IConfigHandler
     public static final EConfigDouble ENTITY_DATA_RANGE = new EConfigDouble("getEntityDataRange", 10, "The length of the raycast for getting entity data");
     public static final EConfigDouble EXPLOSION_BOX_SIZE = new EConfigDouble("explosionBoxSize", 0.25, "Size of the explosion boxes");
     public static final EConfigDouble POINT_SIZE = new EConfigDouble("pointSize", 0.02, "Size of the points in the Block Rays renderer");
+    public static final EConfigInteger PROBABILITY_DIGITS = new EConfigInteger("probabilityDigits", 3, "Digits of precision after the decimal point for explosionBlocksProbability");
     public static final EConfigInteger EXPLOSION_LIMIT = new EConfigInteger("explosionLimit", -1, "Maximum number of distinct explosion positions to process. Set to a small number to reduce lag");
 
     public static ImmutableList<IConfigBase> getOptions()
@@ -99,6 +100,7 @@ public class Configs implements IConfigHandler
       ENTITY_DATA_RANGE,
       EXPLOSION_BOX_SIZE,
       POINT_SIZE,
+      PROBABILITY_DIGITS,
       EXPLOSION_LIMIT
     );
 
@@ -119,6 +121,8 @@ public class Configs implements IConfigHandler
       "Shows minimum and maximum \"rays\" checked for block breaking", "Explosion Block Rays"),
     EXPLOSION_AFFECTED_BLOCKS("explosionAffectedBlocks", "#44FF0000", "Minimum color", "#44FFFF00", "Maximum color",
       "Shows the minimum and maximum blocks destroyed by an explosion", "Explosion Affected Blocks"),
+    EXPLOSION_BLOCKS_PROBABILITY("explosionBlocksProbability", "#FFFFFFFF", "Text color", "#44000000", "Background color",
+      "Shows the probability that blocks are destroyed by an explosion. Only displayed if not 0%%%% or 100%%%%", "Explosion Blocks Probability"),
 
     ENTITY_CREATION  ("entityCreation",   "#4400FF00",                          "#00000000",                          "Shows boxes at entity spawn locations", "Entity Creation"),
     ENTITY_TICKS     ("entityTicks",      "#440000FF",                          "#00000000",                          "Shows boxes at entity tick locations",  "Entity Ticks"),

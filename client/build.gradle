@@ -1,38 +1,56 @@
 plugins {
   id 'maven-publish'
-  id 'fabric-loom' version '1.4-SNAPSHOT' apply false
-  id 'com.replaymod.preprocess' version '20c7ec554a'
+  id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT' apply false
+  id 'net.fabricmc.fabric-loom-remap' version '1.16-SNAPSHOT' apply false
+  // id 'com.replaymod.preprocess' version '20c7ec554a'
+  id 'com.replaymod.preprocess' version 'c5abb4fb12'
 }
 
 preprocess {
+  strictExtraMappings = false
+  // tabIndentation = false
   def mc1171 = createNode('1.17.1' , 1_17_01, 'yarn')
   def mc1182 = createNode('1.18.2' , 1_18_02, 'yarn')
   def mc1193 = createNode('1.19.3' , 1_19_03, 'yarn')
   def mc1194 = createNode('1.19.4' , 1_19_04, 'yarn')
+  def mc1201 = createNode('1.20.1' , 1_20_01, 'yarn')
   def mc1202 = createNode('1.20.2' , 1_20_02, 'yarn')
+  def mc1204 = createNode('1.20.4' , 1_20_04, 'yarn')
+  def mc1206 = createNode('1.20.6' , 1_20_06, 'yarn')
   // def mcSnapshot = createNode('snapshot', 1_19_00, 'yarn')
 
   mc1171.link(mc1182, null)
   mc1182.link(mc1193, null)
   mc1193.link(mc1194, null)
-  mc1194.link(mc1202, null)
-  // mc1201.link(mcSnapshot, null)
+  mc1194.link(mc1201, null)
+  mc1201.link(mc1202, null)
+  mc1202.link(mc1204, null)
+  mc1204.link(mc1206, null)
+
+  for(final def node in getNodes()) {
+    findProject(node.project).ext.mcVersion = node.mcVersion
+  }
 }
 
 tasks.register('buildAndGather') {
   subprojects {
-    dependsOn project.name + ':build'
+    dependsOn project.tasks.named('build').get()
   }
   doFirst {
     println 'Gathering builds'
-    copy {
-      subprojects {
-        def libDir = project.projectDir.toPath().resolve('build/libs')
-        from(libDir) {
+    def buildLibs = {
+      p -> p.buildDir.toPath().resolve('libs')
+    }
+    delete fileTree(buildLibs(rootProject)) {
+      include '*'
+    }
+    subprojects {
+      copy {
+        from(buildLibs(project)) {
           include '*.jar'
           exclude '*-dev.jar', '*-sources.jar'
         }
-        into 'build/libs/'
+        into buildLibs(rootProject)
         duplicatesStrategy DuplicatesStrategy.INCLUDE
       }
     }

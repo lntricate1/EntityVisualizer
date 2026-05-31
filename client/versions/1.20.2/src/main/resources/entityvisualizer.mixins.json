@@ -1,0 +1,22 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.lntricate.entityvisualizer.mixins",
+  "compatibilityLevel": "{{COMPATIBILITY_LEVEL}}",
+  "client": [
+    "ClientPacketListenerMixin",
+    "ClientboundCustomPayloadPacketMixin",
+    "MinecraftMixin"
+  ],
+  "server": [
+    "AbstractArrowMixin",
+    "EntityMixin",
+    "PlayerListMixin",
+    "ServerCommonPacketListenerImplMixin",
+    "ServerboundCustomPayloadPacketMixin",
+    "ThrowableProjectileMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

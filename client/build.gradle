@@ -16,7 +16,7 @@ preprocess {
   def mc1201 = createNode('1.20.1' , 1_20_01, 'yarn')
   def mc1202 = createNode('1.20.2' , 1_20_02, 'yarn')
   def mc1204 = createNode('1.20.4' , 1_20_04, 'yarn')
-  def mc1206 = createNode('1.20.6' , 1_20_06, 'yarn')
+  // def mc1206 = createNode('1.20.6' , 1_20_06, 'yarn')
   // def mcSnapshot = createNode('snapshot', 1_19_00, 'yarn')
 
   mc1171.link(mc1182, null)
@@ -25,7 +25,7 @@ preprocess {
   mc1194.link(mc1201, null)
   mc1201.link(mc1202, null)
   mc1202.link(mc1204, null)
-  mc1204.link(mc1206, null)
+  // mc1204.link(mc1206, null)
 
   for(final def node in getNodes()) {
     findProject(node.project).ext.mcVersion = node.mcVersion

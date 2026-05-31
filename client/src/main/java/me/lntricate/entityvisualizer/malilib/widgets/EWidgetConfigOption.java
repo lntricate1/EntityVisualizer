@@ -9,7 +9,11 @@ import org.jetbrains.annotations.Nullable;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+//#if MC >= 12001
+//$$ import net.minecraft.client.gui.GuiGraphics;
+//#else
 import com.mojang.blaze3d.vertex.PoseStack;
+//#endif
 
 import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.config.IConfigResettable;
@@ -120,6 +124,17 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
     textFields.add(wrapper);
   }
 
+  //#if MC >= 12001
+  //$$ @Override public void render(int mouseX, int mouseY, boolean selected, GuiGraphics guiGraphics)
+  //$$ {
+  //$$   RenderUtils.color(1F, 1F, 1F, 1F);
+  //$$   drawSubWidgets(mouseX, mouseY, guiGraphics);
+  //$$   for(TextFieldWrapper<? extends GuiTextFieldGeneric> wrapper : textFields)
+  //$$     wrapper.getTextField().render(guiGraphics, mouseX, mouseY, 0f);
+  //$$   super.render(mouseX, mouseY, selected, guiGraphics);
+  //$$   ((IEConfigWidgetable)wrapper.getConfig()).render(x, y, w, h);
+  //$$ }
+  //#else
   @Override public void render(int mouseX, int mouseY, boolean selected, PoseStack poseStack)
   {
     RenderUtils.color(1F, 1F, 1F, 1F);
@@ -129,6 +144,7 @@ public class EWidgetConfigOption extends WidgetConfigOptionBase<ConfigOptionWrap
     super.render(mouseX, mouseY, selected, poseStack);
     ((IEConfigWidgetable)wrapper.getConfig()).render(x, y, w, h);
   }
+  //#endif
 
   @Override
   protected boolean onMouseClickedImpl(int mouseX, int mouseY, int mouseButton)

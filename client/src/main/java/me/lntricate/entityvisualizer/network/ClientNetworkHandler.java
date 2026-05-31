@@ -24,27 +24,38 @@ public class ClientNetworkHandler
   private static Minecraft mc = Minecraft.getInstance();
   public static boolean hasServer;
 
+  //#if MC >= 12002
+  //$$ public static void handleData(CompoundTag data, LocalPlayer player)
+  //#else
   public static void handleData(FriendlyByteBuf data, LocalPlayer player)
+  //#endif
   {
     if(data == null)
       return;
 
+    //#if MC >= 12002
+    //$$ for(String key : data.getAllKeys())
+    //$$   switch(key)
+    //$$   {
+    //$$     case "HI" -> onServerHi();
+    //$$     case "ENTITY" -> handleEntityPacket(data.getCompound("ENTITY"));
+    //$$     case "GETENTITYDATA" -> handleEntitiesRequestPacket(data.getCompound("GETENTITYDATA"));
+    //$$   }
+    //#else
     int id = data.readVarInt();
-    if(id == NetworkStuff.HI)
-      onServerHi();
-    if(id == NetworkStuff.DATA)
+    switch(id)
     {
-      CompoundTag tag = data.readNbt();
-      switch(tag.getInt("ID"))
-      {
-        case 0:
-          handleEntityPacket(tag);
-          break;
-        case 1:
-          handleEntitiesRequestPacket(tag);
-          break;
+      case NetworkStuff.HI -> onServerHi();
+      case NetworkStuff.DATA -> {
+        CompoundTag tag = data.readNbt();
+        switch(tag.getInt("ID"))
+        {
+          case 0 -> handleEntityPacket(tag);
+          case 1 -> handleEntitiesRequestPacket(tag);
+        }
       }
     }
+    //#endif
   }
 
   private static void onServerHi()
@@ -55,7 +66,13 @@ public class ClientNetworkHandler
 
   public static void setPacketRecievingState(boolean state)
   {
+    //#if MC >= 12002
+    //$$ CompoundTag tag = new CompoundTag();
+    //$$ tag.putBoolean(state ? "HI" : "BYE", true);
+    //$$ mc.player.connection.send(new ServerboundCustomPayloadPacket(new NetworkStuff.EntityVisualizerPayload(tag)));
+    //#else
     mc.player.connection.send(new ServerboundCustomPayloadPacket(NetworkStuff.CHANNEL, (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(state ? NetworkStuff.HI : NetworkStuff.BYE)));
+    //#endif
   }
 
   private static void handleEntityPacket(CompoundTag tag)

@@ -46,7 +46,13 @@ public class KeyCallbacks
         List<Entity> entities = mc.level.getEntities(mc.player, new AABB(pos, look), (Entity entity) -> entity.getBoundingBox().clip(pos, look).isPresent());
         CompoundTag compoundTag = new CompoundTag();
         compoundTag.putIntArray("ids", entities.stream().map((Entity e) -> e.getId()).toList());
+        //#if MC >= 12002
+        //$$ CompoundTag rootTag = new CompoundTag();
+        //$$ rootTag.put("GETENTITYDATA", compoundTag);
+        //$$ mc.player.connection.send(new ServerboundCustomPayloadPacket(new NetworkStuff.EntityVisualizerPayload(rootTag)));
+        //#else
         mc.player.connection.send(new ServerboundCustomPayloadPacket(NetworkStuff.CHANNEL, (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(NetworkStuff.DATA).writeNbt(compoundTag)));
+        //#endif
       }
       return true;
     }

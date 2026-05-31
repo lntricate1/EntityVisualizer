@@ -2,7 +2,11 @@ package me.lntricate.entityvisualizer.malilib.gui;
 
 import org.jetbrains.annotations.Nullable;
 
+//#if MC >= 12001
+//$$ import net.minecraft.client.gui.GuiGraphics;
+//#else
 import com.mojang.blaze3d.vertex.PoseStack;
+//#endif
 
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.interfaces.ISelectionListener;
@@ -103,6 +107,16 @@ public abstract class EGuiListBase<TYPE, WIDGET extends WidgetListEntryBase<TYPE
     return this.getListWidget() != null && this.getListWidget().onMouseReleased(mouseX, mouseY, mouseButton);
   }
 
+  //#if MC >= 12002
+  //$$ @Override
+  //$$ public boolean onMouseScrolled(int mouseX, int mouseY, double horizontalAmount, double verticalAmount)
+  //$$ {
+  //$$   if (super.onMouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount))
+  //$$     return true;
+
+  //$$   return this.getListWidget() != null && this.getListWidget().onMouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+  //$$ }
+  //#else
   @Override
   public boolean onMouseScrolled(int mouseX, int mouseY, double mouseWheelDelta)
   {
@@ -111,6 +125,7 @@ public abstract class EGuiListBase<TYPE, WIDGET extends WidgetListEntryBase<TYPE
 
     return this.getListWidget() != null && this.getListWidget().onMouseScrolled(mouseX, mouseY, mouseWheelDelta);
   }
+  //#endif
 
   @Override
   public boolean onKeyTyped(int keyCode, int scanCode, int modifiers)
@@ -151,10 +166,19 @@ public abstract class EGuiListBase<TYPE, WIDGET extends WidgetListEntryBase<TYPE
       this.getListWidget().resize(mc, width, height);
   }
 
+  //#if MC >= 12001
+  //$$ @Override
+  //$$ public void drawContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
+  //$$ {
+  //$$   if (this.getListWidget() != null)
+  //$$     this.getListWidget().drawContents(guiGraphics, mouseX, mouseY, partialTicks);
+  //$$ }
+  //#else
   @Override
   public void drawContents(PoseStack poseStack, int mouseX, int mouseY, float partialTicks)
   {
     if (this.getListWidget() != null)
       this.getListWidget().drawContents(poseStack, mouseX, mouseY, partialTicks);
   }
+  //#endif
 }

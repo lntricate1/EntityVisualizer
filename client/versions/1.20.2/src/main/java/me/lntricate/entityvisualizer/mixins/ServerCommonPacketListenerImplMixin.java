@@ -12,28 +12,24 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.protocol.PacketUtils;
 import net.minecraft.network.protocol.game.ServerGamePacketListener;
-import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.server.network.ServerCommonPacketListenerImpl;
 
 @Environment(EnvType.SERVER)
-@Mixin(ServerGamePacketListenerImpl.class)
-public class ServerGamePacketListenerImplMixin
+@Mixin(ServerCommonPacketListenerImpl.class)
+public class ServerCommonPacketListenerImplMixin
 {
-  @Shadow private ServerPlayer player;
-
   @Inject(method = "handleCustomPayload", at = @At("HEAD"), cancellable = true)
   private void onCustomPayload(ServerboundCustomPayloadPacket packet, CallbackInfo ci)
   {
-    if(packet.getIdentifier().equals(NetworkStuff.CHANNEL))
+    Object thiss = this;
+    if(thiss instanceof ServerGamePacketListenerImpl impl && packet.payload() instanceof NetworkStuff.EntityVisualizerPayload p)
     {
-      //#if MC >= 12001
-      //$$ PacketUtils.ensureRunningOnSameThread(packet, (ServerGamePacketListener)this, (ServerLevel)player.level());
-      //#else
-      PacketUtils.ensureRunningOnSameThread(packet, (ServerGamePacketListener)this, (ServerLevel)player.level);
-      //#endif
-      ServerNetworkHandler.handleData(packet.getData(), player);
+      PacketUtils.ensureRunningOnSameThread(packet, (ServerGamePacketListener)this, impl.player.serverLevel());
+      ServerNetworkHandler.handleData(p.data(), impl.player);
       ci.cancel();
     }
   }

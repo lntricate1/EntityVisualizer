@@ -29,6 +29,10 @@ public abstract class AbstractArrowMixin extends Entity
   private void onTick(CallbackInfo ci)
   {
     Vec3 vel = getDeltaMovement();
+    //#if MC >= 12001
+    //$$ ServerNetworkHandler.sendEntity((ServerLevel)level(), getId(), position().add(vel), vel, true, true, true);
+    //#else
     ServerNetworkHandler.sendEntity((ServerLevel)level, getId(), position().add(vel), vel, true, true, true);
+    //#endif
   }
 }

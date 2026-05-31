@@ -29,6 +29,11 @@ public abstract class ThrowableProjectileMixin extends Entity
   private void onTickTail(CallbackInfo ci)
   {
     Vec3 vel = getDeltaMovement();
-    ServerNetworkHandler.sendEntity((ServerLevel)level, getId(), position().add(vel), vel, true, true, true);
+    // if(isAlive())
+      //#if MC >= 12001
+      //$$ ServerNetworkHandler.sendEntity((ServerLevel)level(), getId(), position().add(vel), vel, true, true, true);
+      //#else
+      ServerNetworkHandler.sendEntity((ServerLevel)level, getId(), position().add(vel), vel, true, true, true);
+      //#endif
   }
 }

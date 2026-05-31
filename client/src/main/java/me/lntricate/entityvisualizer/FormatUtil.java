@@ -3,7 +3,9 @@ package me.lntricate.entityvisualizer;
 import me.lntricate.entityvisualizer.malilib.config.options.EConfigString;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+//#if MC < 11900
 import net.minecraft.network.chat.TextComponent;
+//#endif
 
 public class FormatUtil
 {

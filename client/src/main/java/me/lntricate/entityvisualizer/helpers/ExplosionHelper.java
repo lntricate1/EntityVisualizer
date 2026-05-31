@@ -113,7 +113,11 @@ public class ExplosionHelper
       double ly = Mth.lerp(y, aabb.minY, aabb.maxY);
       double lz = Mth.lerp(z, aabb.minZ, aabb.maxZ);
       Vec3 vec3 = new Vec3(lx + bx, ly, lz + bz);
+      //#if MC >= 12001
+      //$$ boolean hit = entity.level().clip(new ClipContext(vec3, pos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)).getType() == HitResult.Type.MISS;
+      //#else
       boolean hit = entity.level.clip(new ClipContext(vec3, pos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)).getType() == HitResult.Type.MISS;
+      //#endif
       points.put(vec3, hit);
     }
     return points;
